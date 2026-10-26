@@ -1,0 +1,15 @@
+#!/bin/sh
+# Blocks direct commits to main and verifies formatting of the solution.
+branch=$(git rev-parse --abbrev-ref HEAD)
+if [ "$branch" = "main" ] || [ "$branch" = "master" ]; then
+  echo "pre-commit: direct commits to '$branch' are not allowed. Create a branch: <type>/<issue#>-<slug>" >&2
+  exit 1
+fi
+
+if git diff --cached --name-only | grep -qE '\.(cs|csproj|props|targets|editorconfig)$'; then
+  echo "pre-commit: dotnet format --verify-no-changes"
+  if ! dotnet format --verify-no-changes; then
+    echo "pre-commit: formatting issues found. Run 'dotnet format' and re-stage." >&2
+    exit 1
+  fi
+fi
