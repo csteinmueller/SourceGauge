@@ -31,6 +31,6 @@ Closes #
 ## AI assistance
 
 - [ ] No AI assistance
-- [ ] AI-assisted — agent/model: <!-- e.g. developer agent (Claude Sonnet) -->
+- [ ] AI-assisted
 - [ ] Architect agent review requested and findings addressed
 - [ ] I have personally reviewed every line of AI-generated code and take responsibility for it
