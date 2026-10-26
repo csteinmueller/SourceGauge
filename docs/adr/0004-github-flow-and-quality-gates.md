@@ -21,7 +21,7 @@ The project is public on GitHub under MIT. We need a lightweight, widely underst
 - Required checks: CI (format, build, test on Linux + Windows), CodeQL, PR title.
 - Work is tracked in GitHub issues: features, bugs, requirements, and **technical debt** (label `tech-debt`).
 - Dependabot keeps NuGet packages and GitHub Actions current.
-- `main` protection (configured by maintainer in repository settings): require PR, 1 approval, CODEOWNERS review, passing checks, linear history; no force-push.
+- `main` protection (repository ruleset, configured by the maintainer): require PR, required status checks (CI, CodeQL, PR title), linear history, no force-push, no deletion. Required approvals stay at 0 while the project has a single maintainer (GitHub does not allow approving your own PR); raise to 1 with CODEOWNERS review once there are co-maintainers.
 
 ## Consequences
 
