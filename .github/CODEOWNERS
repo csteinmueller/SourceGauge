@@ -1,0 +1,8 @@
+# Default owner for everything
+* @csteinmueller
+
+# Architecture-relevant files require an explicit architecture review
+/docs/adr/          @csteinmueller
+/docs/vision.md     @csteinmueller
+/.github/           @csteinmueller
+/AGENTS.md          @csteinmueller

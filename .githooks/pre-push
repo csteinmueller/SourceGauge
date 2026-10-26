@@ -1,0 +1,15 @@
+#!/bin/sh
+# Blocks pushes to main and runs build + tests before pushing.
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/master)
+      echo "pre-push: pushing to '$remote_ref' is not allowed. Open a pull request." >&2
+      exit 1 ;;
+  esac
+done
+
+echo "pre-push: dotnet build + test"
+dotnet build -c Release --nologo -v q && dotnet test -c Release --no-build --nologo -v q || {
+  echo "pre-push: build or tests failed." >&2
+  exit 1
+}

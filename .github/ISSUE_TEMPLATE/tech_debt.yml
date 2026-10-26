@@ -1,0 +1,42 @@
+name: Technical debt
+description: Record a known shortcut, design flaw, or cleanup item.
+title: "debt: "
+labels: [tech-debt]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What is the debt?
+      description: Where is it (file/area) and what is wrong with it?
+    validations:
+      required: true
+  - type: textarea
+    id: origin
+    attributes:
+      label: Why was it taken on?
+      description: Link the PR / ADR / decision that introduced it, if known.
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact ("interest")
+      description: What does it cost us while it remains? (bugs, slowness, blocked features, risk)
+    validations:
+      required: true
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Proposed remediation
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options: [Low, Medium, High, Critical]
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Debt type
+      options: [Code, Design/Architecture, Test, Documentation, Build/Infrastructure, Dependency]
+    validations:
+      required: true

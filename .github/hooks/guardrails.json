@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "pwsh -NoProfile -File scripts/hooks/agent-pre-tool-guard.ps1",
+        "timeout": 10
+      }
+    ]
+  }
+}

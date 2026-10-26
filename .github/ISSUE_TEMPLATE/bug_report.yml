@@ -1,0 +1,31 @@
+name: Bug report
+description: An analyzer reports a wrong value, crashes, or misbehaves.
+title: "bug: "
+labels: [bug, triage]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Include the diagnostic ID and the reported vs. expected metric value.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Smallest C# snippet that reproduces the issue.
+      render: csharp
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: SourceGauge version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: SDK version, IDE (VS / Rider / VS Code / CLI), OS

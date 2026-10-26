@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SourceGauge.Analyzers/SourceGauge.Analyzers.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SourceGauge.Analyzers.Tests/SourceGauge.Analyzers.Tests.csproj" />
+  </Folder>
+</Solution>
