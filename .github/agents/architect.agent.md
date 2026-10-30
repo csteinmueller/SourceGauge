@@ -4,7 +4,12 @@ description: "Reviews SourceGauge changes for architecture, correctness, Roslyn 
 model: ['GPT-5 (copilot)', 'GPT-5 mini (copilot)']
 tools: [read, search, web, execute]
 argument-hint: "Branch, PR, or design question to review"
+agents: [product-owner]
 handoffs:
+  - label: Create work item
+    agent: product-owner
+    prompt: "Create a SourceGauge work item for the tech debt, requirement, or follow-up identified above. Check for duplicates and return its issue URL, or ask for missing required details."
+    send: false
   - label: Address review findings
     agent: developer
     prompt: "Address the BLOCKER and MAJOR findings from the architecture review above, then re-run build, tests and format."

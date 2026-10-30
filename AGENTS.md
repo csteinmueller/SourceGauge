@@ -15,7 +15,7 @@ SourceGauge is an open-source (MIT) Roslyn analyzer that computes software metri
 | `docs/vision.md` | Product vision — the "why" |
 | `docs/requirements/` | Accepted requirements (`REQ-xxxx`) |
 | `docs/adr/` | Architecture Decision Records (`ADR-xxxx`) |
-| `.github/agents/` | Custom agents (developer, architect) |
+| `.github/agents/` | Custom agents (product-owner, developer, architect) |
 | `.github/prompts/` | Reusable prompts (request review, new ADR, …) |
 | `.githooks/` | Local git hooks (enable with `scripts/setup.ps1` / `scripts/setup.sh`) |
 
@@ -32,7 +32,7 @@ All four must pass before a change is proposed for review.
 
 ## Workflow
 
-1. Every change starts from a GitHub **issue** (feature, bug, requirement, or tech-debt).
+1. Every change starts from a GitHub **issue** (feature, bug, requirement, or tech-debt). Use the `product-owner` agent to create or refine work items when needed.
 2. Work on a branch `<type>/<issue#>-<short-slug>` (e.g. `feat/12-cyclomatic-complexity`). Never commit to `main`.
 3. Commits and PR titles follow **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `build:`, `ci:`, `chore:`).
 4. The **developer** agent implements; then it **requests a review** from the **architect** agent (`/request-review`).
