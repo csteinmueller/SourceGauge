@@ -9,7 +9,7 @@
 
 ## Statement
 
-The analyzer shall …
+SourceGauge shall …
 
 ## Rationale
 

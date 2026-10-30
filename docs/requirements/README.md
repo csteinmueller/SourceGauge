@@ -2,7 +2,7 @@
 
 Accepted requirements live here as one Markdown file each, with a stable ID that never gets reused.
 
-- **Functional requirements (FR)** — what the analyzer does (e.g. "reports cyclomatic complexity per method").
+- **Functional requirements (FR)** — what analysis does and what metric data it produces (e.g. "reports cyclomatic complexity per method in the output").
 - **Non-functional requirements (NFR)** — quality attributes (performance, compatibility, usability, security, …).
 
 ## Process
@@ -21,4 +21,4 @@ Accepted requirements live here as one Markdown file each, with a stable ID that
 
 | ID | Title | Kind | Priority | Status |
 |----|-------|------|----------|--------|
-| — | _No requirements recorded yet. NFRs, the first metric and the MVP scope follow next._ | | | |
+| — | _No requirements recorded yet._ | | | |

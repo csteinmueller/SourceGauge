@@ -2,14 +2,10 @@
 applyTo: "**/*.cs"
 ---
 
-# C# / Roslyn analyzer conventions
+# C# / Roslyn analysis conventions
 
-- `src/SourceGauge.Analyzers` targets `netstandard2.0`: no APIs beyond .NET Standard 2.0, no runtime package dependencies.
-- Every `DiagnosticAnalyzer` must:
-  - be `sealed`, decorated with `[DiagnosticAnalyzer(LanguageNames.CSharp)]`;
-  - call `context.EnableConcurrentExecution()` and `context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None)` in `Initialize`;
-  - hold no mutable state;
-  - define descriptors as `static readonly` fields with ID `SGxxxx`, category `DiagnosticConventions.MetricsCategory`, and a `helpLinkUri`.
-- Read thresholds from `AnalyzerConfigOptions` (`.editorconfig` keys `sourcegauge.<metric>.<option>`), with documented defaults.
-- Avoid LINQ, closures, and boxing in callbacks that run per syntax node.
-- Tests cover: no diagnostic below threshold, diagnostic at/above threshold, configuration override, and edge cases (partial types, local functions, lambdas, generated code).
+- Use Roslyn project and compilation context where it improves C# metric correctness; do not require a SourceGauge reference in the analyzed project.
+- Keep metric definitions and results independent of Roslyn-specific syntax and symbol types at the shared output boundary.
+- Keep analysis stateless where practical, avoid unnecessary work and allocations in large codebases, and account for partial types, local functions, lambdas, expression bodies, top-level statements, and generated code as appropriate to each metric.
+- Do not translate metric values into analyzer diagnostics, threshold violations, or build failures.
+- Tests cover documented metric semantics, representative C# edge cases, and the structured output contract.
