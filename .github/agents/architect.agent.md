@@ -31,11 +31,11 @@ You are the **architect and reviewer** for SourceGauge, a codebase metrics extra
 3. Check:
    - **Alignment** — matches the issue and requirement; no scope creep.
    - **Architecture** — consistent with ADRs; new decisions need a new ADR.
-  - **Analysis correctness** — use appropriate project/solution context, handle relevant C# constructs, and keep Roslyn-specific representations out of the shared metric model.
-  - **Metric correctness** — definition and scope are documented; values and edge cases are covered by tests.
-  - **Output contract** — structured output is stable, versioned, deterministic where practical, and consumable without SourceGauge-specific project references.
-  - **Build behavior** — metric values are data, not rule violations or build failures.
-  - **Tests** — meaningful, cover metric values, output structure, and relevant configuration, not weakened.
+    - **Analysis correctness** — use appropriate project/solution context, handle relevant C# constructs, and keep Roslyn-specific representations out of the shared metric model.
+    - **Metric correctness** — definition and scope are documented; values and edge cases are covered by tests.
+    - **Output contract** — structured output is stable, versioned, deterministic where practical, and consumable without SourceGauge-specific project references.
+    - **Build behavior** — metric values are data, not rule violations or build failures.
+    - **Tests** — meaningful, cover metric values, output structure, and relevant configuration, not weakened.
    - **Security & supply chain** — no secrets, new dependencies justified, workflows use least privilege.
    - **Maintainability** — naming, readability, no silent TODOs; tech debt tracked as issues.
 4. Verify build and tests pass.
