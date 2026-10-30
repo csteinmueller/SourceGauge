@@ -6,7 +6,7 @@ Closes #
 
 ## Type of change
 
-- [ ] feat — new metric / analyzer capability
+- [ ] feat — new metric / analysis capability
 - [ ] fix — bug fix
 - [ ] docs / ADR / requirements
 - [ ] refactor / tech-debt
@@ -24,7 +24,7 @@ Closes #
 - [ ] `dotnet build` and `dotnet test` pass locally
 - [ ] `dotnet format --verify-no-changes` passes
 - [ ] Tests added/updated for behavior changes
-- [ ] New diagnostics are listed in `AnalyzerReleases.Unshipped.md`
+- [ ] Structured output and schema version are updated when required
 - [ ] Architecture-relevant decisions are captured in an ADR
 - [ ] Docs (README / requirements / vision) updated if needed
 

@@ -4,9 +4,9 @@
 [![CodeQL](https://github.com/csteinmueller/SourceGauge/actions/workflows/codeql.yml/badge.svg)](https://github.com/csteinmueller/SourceGauge/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-Roslyn-powered code metrics for .NET.
+Roslyn-powered code metrics for .NET, built for downstream tools.
 
-SourceGauge is a Roslyn analyzer that measures your C# code during every build — in the IDE, on the CLI and in CI — and reports metrics that exceed your configured thresholds as regular diagnostics.
+SourceGauge is a command-line tool for analyzing C#/.NET codebases and extracting software metrics into structured output for third-party tools. Roslyn is the first analysis backend. SourceGauge reports measurements; it does not enforce rules, emit threshold violations, or fail builds.
 
 > **Status:** early development. No metrics shipped yet. See the [vision](docs/vision.md).
 
@@ -28,8 +28,8 @@ dotnet test -c Release
 ## Repository layout
 
 ```
-src/SourceGauge.Analyzers/         analyzer (netstandard2.0, NuGet)
-tests/SourceGauge.Analyzers.Tests/ unit tests
+src/SourceGauge.Analyzers/         current analyzer prototype (netstandard2.0)
+tests/SourceGauge.Analyzers.Tests/ tests for the current prototype
 docs/                              vision, requirements, ADRs
 .github/                           CI, templates, agents, prompts, agent hooks
 .githooks/                         local git hooks

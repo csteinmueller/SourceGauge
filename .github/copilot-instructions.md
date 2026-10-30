@@ -1,6 +1,6 @@
 # Copilot instructions
 
-Follow [AGENTS.md](../AGENTS.md) — it is the authoritative rule set for this repository (workflow, guardrails, analyzer rules, commands).
+Follow [AGENTS.md](../AGENTS.md) — it is the authoritative rule set for this repository (workflow, guardrails, metrics and analysis rules, commands).
 
 Key reminders:
 - Read [docs/vision.md](../docs/vision.md), relevant [requirements](../docs/requirements/README.md) and [ADRs](../docs/adr/README.md) before designing anything.
