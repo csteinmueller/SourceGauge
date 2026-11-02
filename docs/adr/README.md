@@ -26,3 +26,4 @@ We record architecturally significant decisions as lightweight ADRs, following [
 | [0005](0005-load-csharp-projects-with-msbuildworkspace.md) | Load C# projects with MSBuildWorkspace | Accepted |
 | [0006](0006-versioned-metric-data-model-export.md) | Versioned metric data model and export | Accepted |
 | [0007](0007-versioned-json-metric-export-contract.md) | Versioned JSON metric export contract | Accepted |
+| [0008](0008-fanin-metric-definition.md) | FanIn metric definition | Accepted |
