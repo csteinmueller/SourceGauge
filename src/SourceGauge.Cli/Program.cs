@@ -2,6 +2,8 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
@@ -23,7 +25,7 @@ internal static class CliApplication
     private const int _analysisFailureExitCode = 1;
     private const int _usageErrorExitCode = 2;
 
-    private const string _usage = "Usage: SourceGauge <project.csproj|solution.sln> | --help | --version";
+    private const string _usage = "Usage: SourceGauge [--output <file>] <project.csproj|solution.sln> | --help | --version";
 
     private static readonly object _msBuildRegistrationLock = new();
 
@@ -42,17 +44,19 @@ internal static class CliApplication
             return _successExitCode;
         }
 
-        if (args.Length != 1)
+        if (!TryParseArguments(args, out string? inputArgument, out string? outputArgument, out string? argumentError))
         {
-            await error.WriteLineAsync("Error: provide exactly one project or solution path.").ConfigureAwait(false);
+            await error.WriteLineAsync(argumentError ?? "Error: provide exactly one project or solution path.").ConfigureAwait(false);
             await error.WriteLineAsync(_usage).ConfigureAwait(false);
             return _usageErrorExitCode;
         }
 
         string inputPath;
+        string? outputPath;
         try
         {
-            inputPath = Path.GetFullPath(args[0]);
+            inputPath = Path.GetFullPath(inputArgument!);
+            outputPath = outputArgument is null ? null : Path.GetFullPath(outputArgument);
         }
         catch (ArgumentException exception)
         {
@@ -64,6 +68,21 @@ internal static class CliApplication
             await error.WriteLineAsync($"Error: invalid input path: {exception.Message}").ConfigureAwait(false);
             return _usageErrorExitCode;
         }
+
+        if (outputPath is not null && PathsReferToSameFile(inputPath, outputPath))
+        {
+            await error.WriteLineAsync("Error: output file must differ from the input project or solution.").ConfigureAwait(false);
+            return _usageErrorExitCode;
+        }
+
+        string relativeInputPath = Path.GetRelativePath(Environment.CurrentDirectory, inputPath);
+        if (Path.IsPathRooted(relativeInputPath))
+        {
+            await error.WriteLineAsync("Error: input and working directory must be on the same volume for a relative input identity.").ConfigureAwait(false);
+            return _usageErrorExitCode;
+        }
+
+        relativeInputPath = NormalizeSeparators(relativeInputPath);
 
         string extension = Path.GetExtension(inputPath);
         bool isProject = extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase);
@@ -80,10 +99,11 @@ internal static class CliApplication
             return _usageErrorExitCode;
         }
 
+        LoadedInput? loadedInput;
         try
         {
             RegisterMsBuild();
-            return await LoadInputAsync(inputPath, isProject, error).ConfigureAwait(false);
+            loadedInput = await LoadInputAsync(inputPath, isProject, relativeInputPath, error).ConfigureAwait(false);
         }
         catch (IOException exception)
         {
@@ -105,9 +125,71 @@ internal static class CliApplication
             await error.WriteLineAsync($"Analysis failed: {exception.Message}").ConfigureAwait(false);
             return _analysisFailureExitCode;
         }
+
+        if (loadedInput is null)
+        {
+            return _analysisFailureExitCode;
+        }
+
+        try
+        {
+            MetricResultDocument document = new(
+                MetricResultJson.SchemaVersion,
+                new MetricTool(
+                    "SourceGauge",
+                    typeof(CliApplication).Assembly.GetName().Version?.ToString(3) ?? "unknown"),
+                new MetricRun(new MetricInput(loadedInput.Kind, loadedInput.Path)),
+                Array.Empty<MetricRecord>());
+            byte[] json = MetricResultJson.Serialize(document);
+
+            if (outputPath is null)
+            {
+                await WriteToStandardOutputAsync(output, json).ConfigureAwait(false);
+            }
+            else
+            {
+                await WriteOutputFileAsync(outputPath, json).ConfigureAwait(false);
+            }
+
+            return _successExitCode;
+        }
+        catch (IOException exception)
+        {
+            await error.WriteLineAsync($"Export failed: {exception.Message}").ConfigureAwait(false);
+            return _analysisFailureExitCode;
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            await error.WriteLineAsync($"Export failed: {exception.Message}").ConfigureAwait(false);
+            return _analysisFailureExitCode;
+        }
+        catch (InvalidOperationException exception)
+        {
+            await error.WriteLineAsync($"Export failed: {exception.Message}").ConfigureAwait(false);
+            return _analysisFailureExitCode;
+        }
+        catch (ArgumentException exception)
+        {
+            await error.WriteLineAsync($"Export failed: {exception.Message}").ConfigureAwait(false);
+            return _analysisFailureExitCode;
+        }
+        catch (JsonException exception)
+        {
+            await error.WriteLineAsync($"Export failed: {exception.Message}").ConfigureAwait(false);
+            return _analysisFailureExitCode;
+        }
+        catch (NotSupportedException exception)
+        {
+            await error.WriteLineAsync($"Export failed: {exception.Message}").ConfigureAwait(false);
+            return _analysisFailureExitCode;
+        }
     }
 
-    private static async Task<int> LoadInputAsync(string inputPath, bool isProject, TextWriter error)
+    private static async Task<LoadedInput?> LoadInputAsync(
+        string inputPath,
+        bool isProject,
+        string relativeInputPath,
+        TextWriter error)
     {
         using MSBuildWorkspace workspace = MSBuildWorkspace.Create();
         ConcurrentQueue<WorkspaceDiagnostic> diagnostics = new();
@@ -136,11 +218,155 @@ internal static class CliApplication
 
         if (reportedDiagnostics.Any(diagnostic => diagnostic.Kind == WorkspaceDiagnosticKind.Failure))
         {
-            return _analysisFailureExitCode;
+            return null;
         }
 
         await error.WriteLineAsync($"Loaded {projectCount} project(s) and {documentCount} document(s).").ConfigureAwait(false);
-        return _successExitCode;
+        return new LoadedInput(isProject ? "project" : "solution", relativeInputPath);
+    }
+
+    private static bool TryParseArguments(
+        string[] args,
+        out string? inputPath,
+        out string? outputPath,
+        out string? errorMessage)
+    {
+        inputPath = null;
+        outputPath = null;
+        errorMessage = null;
+
+        for (int index = 0; index < args.Length; index++)
+        {
+            string argument = args[index];
+            if (argument == "--output")
+            {
+                if (outputPath is not null || index + 1 >= args.Length || string.IsNullOrWhiteSpace(args[index + 1]))
+                {
+                    errorMessage = "Error: --output requires one file path and may appear only once.";
+                    return false;
+                }
+
+                outputPath = args[++index];
+                continue;
+            }
+
+            if (argument.StartsWith("--", StringComparison.Ordinal))
+            {
+                errorMessage = $"Error: unknown option: {argument}";
+                return false;
+            }
+
+            if (inputPath is not null)
+            {
+                errorMessage = "Error: provide exactly one project or solution path.";
+                return false;
+            }
+
+            inputPath = argument;
+        }
+
+        if (inputPath is null)
+        {
+            errorMessage = "Error: provide exactly one project or solution path.";
+            return false;
+        }
+
+        return true;
+    }
+
+    private static async Task WriteToStandardOutputAsync(TextWriter output, byte[] json)
+    {
+        string document = Encoding.UTF8.GetString(json) + "\n";
+        await output.WriteAsync(document).ConfigureAwait(false);
+        await output.FlushAsync().ConfigureAwait(false);
+    }
+
+    private static async Task WriteOutputFileAsync(string outputPath, byte[] json)
+    {
+        string outputDirectory = Path.GetDirectoryName(outputPath)!;
+        string temporaryPath = Path.Combine(outputDirectory, $".{Path.GetFileName(outputPath)}.{Guid.NewGuid():N}.tmp");
+        byte[] newline = [0x0A];
+
+        try
+        {
+            await using (FileStream stream = new(
+                temporaryPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 4096,
+                FileOptions.Asynchronous))
+            {
+                await stream.WriteAsync(json).ConfigureAwait(false);
+                await stream.WriteAsync(newline).ConfigureAwait(false);
+                await stream.FlushAsync().ConfigureAwait(false);
+            }
+
+            File.Move(temporaryPath, outputPath, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
+        }
+    }
+
+    private static string NormalizeSeparators(string path)
+    {
+        return path.Replace(Path.DirectorySeparatorChar, '/').Replace(Path.AltDirectorySeparatorChar, '/');
+    }
+
+    private static StringComparison GetPathComparison()
+    {
+        return OperatingSystem.IsWindows() || OperatingSystem.IsMacOS()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+    }
+
+    private static bool PathsReferToSameFile(string inputPath, string outputPath)
+    {
+        if (string.Equals(inputPath, outputPath, GetPathComparison()))
+        {
+            return true;
+        }
+
+        string resolvedInputPath = ResolveExistingFilePath(inputPath);
+        string resolvedOutputPath = ResolveExistingFilePath(outputPath);
+        return string.Equals(resolvedInputPath, resolvedOutputPath, GetPathComparison());
+    }
+
+    private static string ResolveExistingFilePath(string path)
+    {
+        string fullPath = Path.GetFullPath(path);
+        string? root = Path.GetPathRoot(fullPath);
+        if (root is null)
+        {
+            return fullPath;
+        }
+
+        string resolvedPath = root;
+        string[] segments = fullPath[root.Length..].Split(
+            [Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar],
+            StringSplitOptions.RemoveEmptyEntries);
+        foreach (string segment in segments)
+        {
+            string candidate = Path.Combine(resolvedPath, segment);
+            if (!File.Exists(candidate) && !Directory.Exists(candidate))
+            {
+                resolvedPath = candidate;
+                continue;
+            }
+
+            FileSystemInfo fileSystemInfo = Directory.Exists(candidate)
+                ? new DirectoryInfo(candidate)
+                : new FileInfo(candidate);
+            FileSystemInfo? target = fileSystemInfo.ResolveLinkTarget(returnFinalTarget: true);
+            resolvedPath = Path.GetFullPath(target?.FullName ?? candidate);
+        }
+
+        return resolvedPath;
     }
 
     private static void RegisterMsBuild()
@@ -153,4 +379,6 @@ internal static class CliApplication
             }
         }
     }
+
+    private sealed record LoadedInput(string Kind, string Path);
 }
