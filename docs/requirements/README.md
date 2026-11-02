@@ -21,4 +21,4 @@ Accepted requirements live here as one Markdown file each, with a stable ID that
 
 | ID | Title | Kind | Priority | Status |
 |----|-------|------|----------|--------|
-| — | _No requirements recorded yet._ | | | |
+| [REQ-0001](REQ-0001-interoperable-metric-output-contract.md) | Interoperable, language-neutral metric output contract | FR | Must | Accepted |
