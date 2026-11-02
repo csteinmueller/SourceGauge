@@ -1,6 +1,6 @@
 # ADR-0007: Versioned JSON Metric Export Contract
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-01
 - **Deciders:** Maintainer acceptance pending
 - **Related:** REQ-0001, ADR-0006, #18
