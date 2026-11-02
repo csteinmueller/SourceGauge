@@ -1,8 +1,8 @@
 # ADR-0008: FanIn Metric Definition
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-01
-- **Deciders:** Maintainer acceptance pending
+- **Deciders:** @csteinmueller
 - **Related:** #19, REQ-0001, ADR-0007
 
 ## Context
