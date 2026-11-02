@@ -23,3 +23,4 @@ We record architecturally significant decisions as lightweight ADRs, following [
 | [0002](0002-roslyn-analyzer-netstandard20.md) | Use Roslyn for initial C#/.NET analysis | Accepted |
 | [0003](0003-ai-assisted-development-workflow.md) | AI-assisted development with developer and architect agents | Accepted |
 | [0004](0004-github-flow-and-quality-gates.md) | GitHub flow with PRs, Conventional Commits and quality gates | Accepted |
+| [0005](0005-load-csharp-projects-with-msbuildworkspace.md) | Load C# projects with MSBuildWorkspace | Accepted |
