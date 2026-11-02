@@ -9,7 +9,7 @@
 
 SourceGauge needs a precisely defined first metric whose values are reproducible and interpretable by downstream tools. FanIn can mean a count of call sites, distinct caller methods, or callers aggregated at type level. Roslyn can resolve many C# call relationships semantically, but virtual dispatch, generated code, external references, and dynamic calls require explicit scope rules.
 
-REQ-0001 and ADR-0007 establish the language-neutral result contract and JSON export behavior. This ADR proposes FanIn semantics only; it does not change the result model, schema, serializer, or CLI contract. Issue #19 requires maintainer approval of the definition and expected fixtures before implementation.
+REQ-0001 and ADR-0007 establish the language-neutral result contract and JSON export behavior. This ADR records the accepted FanIn semantics; it does not change the result model, schema, serializer, or CLI contract. Issue #19 still requires approval of expected fixtures before implementation.
 
 ## Options considered
 
@@ -19,9 +19,9 @@ REQ-0001 and ADR-0007 establish the language-neutral result contract and JSON ex
 
 ## Decision
 
-**Proposed definition for maintainer approval; no option is accepted until this ADR is accepted and fixtures are approved.** Define FanIn as the number of distinct eligible source caller methods with at least one statically resolved direct call to an eligible target method.
+Define FanIn as the number of distinct eligible source caller methods with at least one statically resolved direct call to an eligible target method.
 
-The recommended v1 rules are:
+The v1 rules are:
 
 - **Measurement level:** method. Eligible targets are source-declared ordinary methods and instance constructors. Eligible callers are source-declared ordinary methods and instance or static constructors. Static constructors are excluded as targets because C# has no explicit source call to a `.cctor`; calls written inside a static constructor still contribute as calls from that caller. Each method symbol is identified by its canonical declaration identity; partial declarations represent one method.
 - **Counted relationships:** an `IInvocationOperation` target, an object-creation constructor, or an explicit `this`/`base` constructor initializer. Generic constructed methods map to their original declaration; reduced extension calls map to the declared extension method. Overloads remain distinct by resolved symbol identity.
@@ -33,10 +33,10 @@ The recommended v1 rules are:
 - **Zero values:** emit a FanIn record with value `0` for every eligible target method with no distinct caller in the boundary.
 - **Output:** use metric identity `sourcegauge.fanin`, scope `project` or `solution` as appropriate, unit `count`, and the entity identity from ADR-0007. Values remain data and do not create diagnostics or build failures.
 
-Before implementation, maintainers must accept or revise the measurement level, caller-vs-call-site rule, included call forms and entities, dispatch behavior, generated-code policy, analysis boundary, and per-target-framework behavior. They must approve representative fixtures and expected values covering zero FanIn, repeated call sites, overloads, constructors (including static constructors as callers), recursion, interface/virtual calls, generated and unresolved code, multi-target projects, and cross-project references within a solution.
+Before implementation, maintainers must approve representative fixtures and expected values covering zero FanIn, repeated call sites, overloads, constructors (including static constructors as callers), recursion, interface/virtual calls, generated and unresolved code, multi-target projects, and cross-project references within a solution. Any change to the accepted metric semantics requires an explicitly approved ADR update.
 
 ## Consequences
 
-If accepted, the definition is implementable with Roslyn semantic operations and yields a stable count of distinct incoming source-method dependencies. It deliberately does not measure call frequency, runtime dispatch, external callers, or type-level aggregation. Those would require a separately defined metric or a future ADR.
+The definition is implementable with Roslyn semantic operations and yields a stable count of distinct incoming source-method dependencies. It deliberately does not measure call frequency, runtime dispatch, external callers, or type-level aggregation. Those would require a separately defined metric or a future ADR.
 
-Until maintainers accept this ADR and approve the fixture set in #19, the recommendation is not an implementation contract and no FanIn collection code should be added.
+This accepted ADR is the implementation contract for FanIn semantics. No FanIn collection code should be added until the fixture set in #19 is approved.
