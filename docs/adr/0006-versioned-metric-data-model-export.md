@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-11-01
 - **Deciders:** @csteinmueller
-- **Related:** #18, #21; REQ ID pending requirement acceptance
+- **Related:** REQ-0001, #18, #21
 
 ## Context
 
@@ -21,7 +21,7 @@ MVP1 should select one encoding. Multiple export formats are out of scope for #1
 
 ## Decision
 
-Accept a language-neutral result envelope with a versioned schema, independent of Roslyn. Defer selection of the encoding and concrete schema and export policies until the interoperability requirement in #21 is accepted and those choices are recorded in an ADR. JSON remains a recommendation for that decision, not an accepted encoding.
+Accept a language-neutral result envelope with a versioned schema, independent of Roslyn, as required by REQ-0001. Defer selection of the encoding and concrete schema and export policies to a follow-up ADR under #18. JSON remains a recommendation for that decision, not an accepted encoding.
 
 The envelope should identify the analyzed source and include tool and schema provenance plus run metadata. Each metric record should carry a stable metric identity, measured entity identity and type, scope, value, and unit. These are semantic requirements for the proposal; exact field names, types, requiredness, and definitions remain subject to maintainer approval.
 
@@ -40,6 +40,6 @@ The following choices remain unresolved and require maintainer acceptance before
 
 ## Consequences
 
-If accepted, this decision will give producers and consumers a shared, versioned contract without introducing Roslyn-specific types into the metric model. It will require a consumer-facing schema or equivalent normative contract, a representative sample, and tests for empty results, escaping, ordering, metadata variability, and output failures.
+This decision establishes the language-neutral model boundary without introducing Roslyn-specific types into the shared metric model. The concrete export contract will require a consumer-facing schema or equivalent normative contract, a representative sample, and tests for empty results, escaping, ordering, metadata variability, and output failures.
 
-This accepted ADR establishes the model boundary and decision sequence; it is not the implementation contract for #18. Implementation of the export contract must wait until the interoperability requirement is accepted and the unresolved choices above are recorded in an accepted ADR.
+This accepted ADR establishes the model boundary, the semantic requirements in REQ-0001, and the decision sequence; it is not the implementation contract for #18. Implementation of the export contract must wait until the unresolved choices above are recorded in an accepted follow-up ADR.
