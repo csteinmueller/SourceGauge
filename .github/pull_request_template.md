@@ -32,5 +32,5 @@ Closes #
 
 - [ ] No AI assistance
 - [ ] AI-assisted
-- [ ] Architect agent review requested and findings addressed
+- [ ] Architect agent review completed; `BLOCKER` and `MAJOR` findings addressed
 - [ ] I have personally reviewed every line of AI-generated code and take responsibility for it

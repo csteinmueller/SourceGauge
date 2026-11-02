@@ -41,7 +41,9 @@ dotnet test -c Release
 dotnet format --verify-no-changes
 ```
 
-Then **request a review**: run `/request-review` (or the *Request architecture review* handoff, or invoke the `architect` subagent). Address every `BLOCKER` and `MAJOR` finding, or justify it in the PR. Only then prepare the PR description from the template, including the AI-assistance section.
+After the gates pass, automatically invoke the `architect` subagent with the current branch, issue number, and a concise change summary. Do not wait for the user to select a handoff or ask permission; review is a required part of implementation. Keep the architect review read-only.
+
+Address every `BLOCKER` and `MAJOR` finding, rerun all gates, and automatically request a follow-up architect review after making fixes. Continue until no `BLOCKER` or `MAJOR` findings remain, or clearly report why review could not run. Only then prepare the PR description from the template, including the AI-assistance section. The `/request-review` prompt and handoff remain available as manual entry points, not substitutes for the automatic review step.
 
 ## Never
 

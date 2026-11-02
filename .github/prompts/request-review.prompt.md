@@ -1,5 +1,5 @@
 ---
-description: "Request an architecture review of the current branch from the architect agent before opening a PR."
+description: "Manually request an architecture review of the current branch; the developer agent normally invokes review automatically after quality gates pass."
 agent: architect
 ---
 
