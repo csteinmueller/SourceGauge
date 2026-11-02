@@ -34,8 +34,8 @@ All four must pass before a change is proposed for review.
 
 1. Every change starts from a GitHub **issue** (feature, bug, requirement, or tech-debt). Use the `product-owner` agent to create or refine work items when needed.
 2. Work on a branch `<type>/<issue#>-<short-slug>` (e.g. `feat/12-cyclomatic-complexity`). Never commit to `main`.
-3. Commits and PR titles follow **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `build:`, `ci:`, `chore:`).
-4. The **developer** agent implements; then it **requests a review** from the **architect** agent (`/request-review`).
+3. Every commit and PR title follows **Conventional Commits** (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `build:`, `ci:`, `chore:`).
+4. The **developer** agent implements and, after the required quality gates pass, automatically invokes the **architect** agent for a read-only review. Do not wait for user confirmation or a manually selected handoff. Address `BLOCKER` and `MAJOR` findings, rerun the gates, and request follow-up review until none remain. Then create local Conventional Commit(s) containing only issue-scoped changes, preserve unrelated work, and report the commit hash(es) and worktree status before preparing a PR. Never bypass failed hooks or push/merge.
 5. Architecture-relevant decisions → new ADR in `docs/adr/` (`/new-adr`).
 6. Shortcuts or known flaws → open a `tech-debt` issue and link it in the PR. Do **not** leave silent `TODO`s; a `TODO` must reference an issue: `// TODO(#123): …`.
 7. Open a **PR** using the template. A human maintainer approves and merges. Agents never merge.

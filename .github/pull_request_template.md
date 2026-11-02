@@ -21,6 +21,7 @@ Closes #
 ## Checklist
 
 - [ ] PR title follows [Conventional Commits](https://www.conventionalcommits.org/)
+- [ ] Commits use Conventional Commit messages and contain only issue-scoped changes
 - [ ] `dotnet build` and `dotnet test` pass locally
 - [ ] `dotnet format --verify-no-changes` passes
 - [ ] Tests added/updated for behavior changes
@@ -32,5 +33,5 @@ Closes #
 
 - [ ] No AI assistance
 - [ ] AI-assisted
-- [ ] Architect agent review requested and findings addressed
+- [ ] Architect agent review completed; `BLOCKER` and `MAJOR` findings addressed
 - [ ] I have personally reviewed every line of AI-generated code and take responsibility for it

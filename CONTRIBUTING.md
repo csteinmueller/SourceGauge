@@ -16,9 +16,10 @@ dotnet test -c Release
 
 1. **Issue first** — pick or open an issue (bug, feature, requirement, or tech debt).
 2. **Branch** — `<type>/<issue#>-<slug>`, e.g. `feat/12-cyclomatic-complexity`.
-3. **Commit** — [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:` …). The `commit-msg` hook checks this.
-4. **Review** — if using AI agents, the developer agent must request an architect review (`/request-review`).
-5. **PR** — fill in the template, link the issue, requirement and ADRs. CI must be green. A maintainer approves and squash-merges.
+3. **Implementation** — the developer agent implements the issue and passes the required quality gates.
+4. **Review** — the developer agent automatically invokes the architect agent. Address `BLOCKER` and `MAJOR` findings, rerun the gates, and request follow-up review until none remain; do not wait for a manual handoff.
+5. **Commit** — after review is clear, the developer agent creates local Conventional Commit(s) for only the issue-scoped changes. Preserve unrelated work and never bypass a failed hook.
+6. **PR** — fill in the template, link the issue, requirement and ADRs. CI must be green. A maintainer approves and squash-merges.
 
 ## Where things live
 
