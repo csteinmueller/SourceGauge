@@ -1,15 +1,15 @@
 # ADR-0006: Versioned Metric Data Model and Export
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-01
-- **Deciders:** Maintainer acceptance pending
+- **Deciders:** @csteinmueller
 - **Related:** #18, #21; REQ ID pending requirement acceptance
 
 ## Context
 
 Downstream tools need a stable, documented contract for consuming SourceGauge results. The contract must be language-neutral, independent of Roslyn, and identify each metric, its measured entity and scope, value and unit, analyzed source, and relevant tool, schema, and run provenance.
 
-Issue #18 recommends JSON for MVP1 but explicitly leaves the encoding, schema, compatibility policy, fields, CLI behavior, failure behavior, provenance variability, and ordering for maintainer decision. This ADR is a proposal, not evidence that any of those choices have been accepted.
+Issue #18 recommends JSON for MVP1 but explicitly leaves the encoding, schema, compatibility policy, fields, CLI behavior, failure behavior, provenance variability, and ordering for maintainer decision. Acceptance of this ADR records the direction and sequencing below; it does not accept those concrete contract choices.
 
 ## Options considered
 
@@ -21,7 +21,7 @@ MVP1 should select one encoding. Multiple export formats are out of scope for #1
 
 ## Decision
 
-**Recommendation only; maintainer acceptance is pending:** adopt a language-neutral result envelope with a versioned schema and one MVP1 encoding, with JSON as the recommended initial encoding.
+Accept a language-neutral result envelope with a versioned schema, independent of Roslyn. Defer selection of the encoding and concrete schema and export policies until the interoperability requirement in #21 is accepted and those choices are recorded in an ADR. JSON remains a recommendation for that decision, not an accepted encoding.
 
 The envelope should identify the analyzed source and include tool and schema provenance plus run metadata. Each metric record should carry a stable metric identity, measured entity identity and type, scope, value, and unit. These are semantic requirements for the proposal; exact field names, types, requiredness, and definitions remain subject to maintainer approval.
 
@@ -42,4 +42,4 @@ The following choices remain unresolved and require maintainer acceptance before
 
 If accepted, this decision will give producers and consumers a shared, versioned contract without introducing Roslyn-specific types into the metric model. It will require a consumer-facing schema or equivalent normative contract, a representative sample, and tests for empty results, escaping, ordering, metadata variability, and output failures.
 
-Until an accepted interoperability requirement is recorded and maintainers approve the choices above, this ADR remains a proposal and must not be treated as an implementation contract.
+This accepted ADR establishes the model boundary and decision sequence; it is not the implementation contract for #18. Implementation of the export contract must wait until the interoperability requirement is accepted and the unresolved choices above are recorded in an accepted ADR.
