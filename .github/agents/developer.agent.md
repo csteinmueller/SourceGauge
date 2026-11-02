@@ -43,7 +43,9 @@ dotnet format --verify-no-changes
 
 After the gates pass, automatically invoke the `architect` subagent with the current branch, issue number, and a concise change summary. Do not wait for the user to select a handoff or ask permission; review is a required part of implementation. Keep the architect review read-only.
 
-Address every `BLOCKER` and `MAJOR` finding, rerun all gates, and automatically request a follow-up architect review after making fixes. Continue until no `BLOCKER` or `MAJOR` findings remain, or clearly report why review could not run. Only then prepare the PR description from the template, including the AI-assistance section. The `/request-review` prompt and handoff remain available as manual entry points, not substitutes for the automatic review step.
+Address every `BLOCKER` and `MAJOR` finding, rerun all gates, and automatically request a follow-up architect review after making fixes. Continue until no `BLOCKER` or `MAJOR` findings remain, or clearly report why review could not run.
+
+After the review is clear and all gates pass, inspect the worktree and create local Conventional Commit(s) for only the issue-scoped changes. Preserve unrelated staged or unstaged work; if the scoped changes cannot be safely separated, stop and report rather than committing unrelated files. Do not commit when the user explicitly asks to leave changes uncommitted, review findings remain unresolved, or a required hook fails. Never bypass a hook. Verify and report the commit hash(es) and final worktree status. Only then prepare the PR description from the template, including the AI-assistance section. The `/request-review` prompt and handoff remain available as manual entry points, not substitutes for the automatic review step.
 
 ## Never
 
