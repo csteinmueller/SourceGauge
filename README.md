@@ -17,13 +17,14 @@ The CLI loads C# projects and Visual Studio solution files using the installed .
 ```bash
 dotnet run --project src/SourceGauge.Cli -- path/to/project.csproj
 dotnet run --project src/SourceGauge.Cli -- path/to/solution.sln
+dotnet run --project src/SourceGauge.Cli -- --output metrics.json path/to/project.csproj
 dotnet run --project src/SourceGauge.Cli -- --help
 dotnet run --project src/SourceGauge.Cli -- --version
 ```
 
-Only analyze projects you trust. MSBuild project evaluation may execute project-defined logic; SourceGauge does not sandbox it. During analysis, progress and diagnostics are written to stderr. Standard output is reserved for machine-readable metrics and remains empty until metric export is implemented. Help and version are written to stdout.
+Only analyze projects you trust. MSBuild project evaluation may execute project-defined logic; SourceGauge does not sandbox it. Operational messages and diagnostics are written to stderr. A successful analysis writes one versioned JSON document to stdout by default, or to the file selected with `--output`; an analysis with no collected metrics emits an empty `metrics` array. The [JSON Schema](docs/schema/metric-results-v1.schema.json) and [sample document](docs/samples/metric-results-v1.json) define the v1 contract. Help and version are written to stdout.
 
-Exit codes are `0` for a successful load, help, or version; `1` for an analysis/load failure; and `2` for invalid arguments or input paths.
+Exit codes are `0` for a successful load/export, help, or version; `1` for an analysis or export failure; and `2` for invalid arguments or input paths.
 
 ## Getting started (contributors)
 

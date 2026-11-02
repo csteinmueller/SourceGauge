@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sourcegauge:metric-results:v1",
+  "title": "SourceGauge metric results v1",
+  "type": "object",
+  "required": ["schemaVersion", "tool", "run", "metrics"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "tool": {
+      "type": "object",
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "run": {
+      "type": "object",
+      "required": ["input"],
+      "properties": {
+        "input": {
+          "type": "object",
+          "required": ["kind", "path"],
+          "properties": {
+            "kind": { "enum": ["project", "solution"] },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "^(?=[\\s\\S]*\\S)(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F])(?:\\.\\./)*(?!\\.{1,2}(?:/|$))(?![\\s\\S]*?/\\.{1,2}(?:/|$))(?![A-Za-z]:)(?!/)(?![\\s\\S]*?\\\\)[^/]+(?:/[^/]+)*$"
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/metric" }
+    }
+  },
+  "$defs": {
+    "metric": {
+      "type": "object",
+      "required": ["id", "scope", "entity", "value", "unit"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "entity": { "$ref": "#/$defs/entity" },
+        "source": { "$ref": "#/$defs/source" },
+        "value": {
+          "anyOf": [
+            { "type": "number", "minimum": -79228162514264337593543950335e0, "maximum": 79228162514264337593543950335e0, "multipleOf": 1e0 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-1, "maximum": 79228162514264337593543950335e-1, "multipleOf": 1e-1 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-2, "maximum": 79228162514264337593543950335e-2, "multipleOf": 1e-2 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-3, "maximum": 79228162514264337593543950335e-3, "multipleOf": 1e-3 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-4, "maximum": 79228162514264337593543950335e-4, "multipleOf": 1e-4 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-5, "maximum": 79228162514264337593543950335e-5, "multipleOf": 1e-5 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-6, "maximum": 79228162514264337593543950335e-6, "multipleOf": 1e-6 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-7, "maximum": 79228162514264337593543950335e-7, "multipleOf": 1e-7 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-8, "maximum": 79228162514264337593543950335e-8, "multipleOf": 1e-8 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-9, "maximum": 79228162514264337593543950335e-9, "multipleOf": 1e-9 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-10, "maximum": 79228162514264337593543950335e-10, "multipleOf": 1e-10 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-11, "maximum": 79228162514264337593543950335e-11, "multipleOf": 1e-11 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-12, "maximum": 79228162514264337593543950335e-12, "multipleOf": 1e-12 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-13, "maximum": 79228162514264337593543950335e-13, "multipleOf": 1e-13 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-14, "maximum": 79228162514264337593543950335e-14, "multipleOf": 1e-14 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-15, "maximum": 79228162514264337593543950335e-15, "multipleOf": 1e-15 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-16, "maximum": 79228162514264337593543950335e-16, "multipleOf": 1e-16 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-17, "maximum": 79228162514264337593543950335e-17, "multipleOf": 1e-17 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-18, "maximum": 79228162514264337593543950335e-18, "multipleOf": 1e-18 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-19, "maximum": 79228162514264337593543950335e-19, "multipleOf": 1e-19 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-20, "maximum": 79228162514264337593543950335e-20, "multipleOf": 1e-20 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-21, "maximum": 79228162514264337593543950335e-21, "multipleOf": 1e-21 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-22, "maximum": 79228162514264337593543950335e-22, "multipleOf": 1e-22 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-23, "maximum": 79228162514264337593543950335e-23, "multipleOf": 1e-23 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-24, "maximum": 79228162514264337593543950335e-24, "multipleOf": 1e-24 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-25, "maximum": 79228162514264337593543950335e-25, "multipleOf": 1e-25 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-26, "maximum": 79228162514264337593543950335e-26, "multipleOf": 1e-26 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-27, "maximum": 79228162514264337593543950335e-27, "multipleOf": 1e-27 },
+            { "type": "number", "minimum": -79228162514264337593543950335e-28, "maximum": 79228162514264337593543950335e-28, "multipleOf": 1e-28 }
+          ]
+        },
+        "unit": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": true
+    },
+    "entity": {
+      "type": "object",
+      "required": ["kind", "projectId", "id"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?=[\\s\\S]*\\S)(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F])(?:\\.\\./)*(?!\\.{1,2}(?:/|$))(?![\\s\\S]*?/\\.{1,2}(?:/|$))(?![A-Za-z]:)(?!/)(?![\\s\\S]*?\\\\)[^/]+(?:/[^/]+)*$"
+        },
+        "id": { "type": "string", "minLength": 1 },
+        "displayName": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "source": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?=[\\s\\S]*\\S)(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F])(?:\\.\\./)*(?!\\.{1,2}(?:/|$))(?![\\s\\S]*?/\\.{1,2}(?:/|$))(?![A-Za-z]:)(?!/)(?![\\s\\S]*?\\\\)[^/]+(?:/[^/]+)*$"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

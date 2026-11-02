@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1",
+  "tool": {
+    "name": "SourceGauge",
+    "version": "0.1.0"
+  },
+  "run": {
+    "input": {
+      "kind": "project",
+      "path": "src/App/App.csproj"
+    }
+  },
+  "metrics": [
+    {
+      "id": "sourcegauge.example.count",
+      "scope": "project",
+      "entity": {
+        "kind": "method",
+        "projectId": "App.csproj",
+        "id": "N.Example`1.Run``1(System.Int32)",
+        "displayName": "Run"
+      },
+      "source": {
+        "path": "Example.cs"
+      },
+      "value": 3,
+      "unit": "count"
+    }
+  ]
+}
