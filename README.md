@@ -8,7 +8,7 @@ Roslyn-powered code metrics for .NET, built for downstream tools.
 
 SourceGauge is a command-line tool for analyzing C#/.NET codebases and extracting software metrics into structured output for third-party tools. Roslyn is the first analysis backend. SourceGauge reports measurements; it does not enforce rules, emit threshold violations, or fail builds.
 
-> **Status:** early development. No metrics shipped yet. See the [vision](docs/vision.md).
+> **Status:** early development. Method-level FanIn is the first metric; packaging and release are tracked separately. See the [FanIn definition](docs/adr/0008-fanin-metric-definition.md) and [vision](docs/vision.md).
 
 ## CLI
 
@@ -22,7 +22,7 @@ dotnet run --project src/SourceGauge.Cli -- --help
 dotnet run --project src/SourceGauge.Cli -- --version
 ```
 
-Only analyze projects you trust. MSBuild project evaluation may execute project-defined logic; SourceGauge does not sandbox it. Operational messages and diagnostics are written to stderr. A successful analysis writes one versioned JSON document to stdout by default, or to the file selected with `--output`; an analysis with no collected metrics emits an empty `metrics` array. The [JSON Schema](docs/schema/metric-results-v1.schema.json) and [sample document](docs/samples/metric-results-v1.json) define the v1 contract. Help and version are written to stdout.
+Only analyze projects you trust. MSBuild project evaluation may execute project-defined logic; SourceGauge does not sandbox it. Operational messages and diagnostics are written to stderr. A successful analysis writes one versioned JSON document to stdout by default, or to the file selected with `--output`; MVP1 currently reports method-level FanIn, and analyses with no eligible methods emit an empty `metrics` array. The [FanIn definition](docs/adr/0008-fanin-metric-definition.md), [JSON Schema](docs/schema/metric-results-v1.schema.json), and [sample document](docs/samples/metric-results-v1.json) define the v1 behavior and output contract. Help and version are written to stdout.
 
 Exit codes are `0` for a successful load/export, help, or version; `1` for an analysis or export failure; and `2` for invalid arguments or input paths.
 
@@ -39,6 +39,7 @@ dotnet test -c Release
 - [Vision](docs/vision.md)
 - [Requirements](docs/requirements/README.md)
 - [Architecture Decision Records](docs/adr/README.md)
+- [FanIn metric definition](docs/adr/0008-fanin-metric-definition.md)
 - [Contributing](CONTRIBUTING.md) · [Agent rules](AGENTS.md) · [Security](SECURITY.md)
 
 ## Repository layout
