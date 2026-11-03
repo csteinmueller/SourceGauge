@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using Microsoft.Build.Locator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.MSBuild;
+using SourceGauge.Core;
+using SourceGauge.CSharp;
 
 namespace SourceGauge.Cli;
 

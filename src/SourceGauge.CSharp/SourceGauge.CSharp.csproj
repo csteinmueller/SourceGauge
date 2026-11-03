@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SourceGauge.CSharp</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SourceGauge.Core\SourceGauge.Core.csproj" />
+    <InternalsVisibleTo Include="SourceGauge.Cli" />
+    <InternalsVisibleTo Include="SourceGauge.CSharp.Tests" />
+  </ItemGroup>
+
+</Project>

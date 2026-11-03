@@ -4,14 +4,17 @@ This file is the single source of truth for any AI agent (GitHub Copilot, Claude
 
 ## Project in one paragraph
 
-SourceGauge is an open-source (MIT) command-line tool that extracts software metrics from codebases for downstream tools. C#/.NET is the first target, using Roslyn wherever possible; the intended product produces structured metric data and does not gate builds. The repository currently contains an analyzer prototype. See [docs/vision.md](docs/vision.md).
+SourceGauge is an open-source (MIT) command-line tool that extracts software metrics from codebases for downstream tools. C#/.NET is the first target, using Roslyn wherever possible; the intended product produces structured metric data and does not gate builds. See [docs/vision.md](docs/vision.md).
 
 ## Layout
 
 | Path | Purpose |
 |------|---------|
-| `src/SourceGauge.Analyzers/` | Current Roslyn analyzer prototype (`netstandard2.0`) |
-| `tests/SourceGauge.Analyzers.Tests/` | xUnit tests for the current prototype (`net10.0`) |
+| `src/SourceGauge.Core/` | Language-neutral metric result model (`net10.0`) |
+| `src/SourceGauge.CSharp/` | Roslyn-backed C# metric generators (`net10.0`) |
+| `src/SourceGauge.Cli/` | CLI loading, orchestration, and JSON export (`net10.0`) |
+| `tests/SourceGauge.CSharp.Tests/` | C# metric generator tests |
+| `tests/SourceGauge.Cli.Tests/` | CLI and export integration tests |
 | `docs/vision.md` | Product vision — the "why" |
 | `docs/requirements/` | Accepted requirements (`REQ-xxxx`) |
 | `docs/adr/` | Architecture Decision Records (`ADR-xxxx`) |

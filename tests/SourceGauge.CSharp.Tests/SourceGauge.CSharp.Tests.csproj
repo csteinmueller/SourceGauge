@@ -12,11 +12,10 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <PackageReference Include="coverlet.collector" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\SourceGauge.Analyzers\SourceGauge.Analyzers.csproj" />
+    <ProjectReference Include="..\..\src\SourceGauge.CSharp\SourceGauge.CSharp.csproj" />
   </ItemGroup>
 
 </Project>

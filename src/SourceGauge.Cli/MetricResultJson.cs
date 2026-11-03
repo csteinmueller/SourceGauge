@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using SourceGauge.Core;
 
 namespace SourceGauge.Cli;
 
