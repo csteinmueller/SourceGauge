@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -139,7 +141,7 @@ internal static class CliApplication
                     "SourceGauge",
                     typeof(CliApplication).Assembly.GetName().Version?.ToString(3) ?? "unknown"),
                 new MetricRun(new MetricInput(loadedInput.Kind, loadedInput.Path)),
-                Array.Empty<MetricRecord>());
+                loadedInput.Metrics);
             byte[] json = MetricResultJson.Serialize(document);
 
             if (outputPath is null)
@@ -191,24 +193,18 @@ internal static class CliApplication
         string relativeInputPath,
         TextWriter error)
     {
+        string inputRoot = Path.GetDirectoryName(inputPath)!;
+        if (isProject)
+        {
+            return await LoadProjectInputAsync(inputPath, relativeInputPath, inputRoot, error).ConfigureAwait(false);
+        }
+
         using MSBuildWorkspace workspace = MSBuildWorkspace.Create();
         ConcurrentQueue<WorkspaceDiagnostic> diagnostics = new();
         workspace.RegisterWorkspaceFailedHandler(eventArgs => diagnostics.Enqueue(eventArgs.Diagnostic));
 
-        int projectCount;
-        int documentCount;
-        if (isProject)
-        {
-            Project project = await workspace.OpenProjectAsync(inputPath).ConfigureAwait(false);
-            projectCount = 1;
-            documentCount = project.Documents.Count();
-        }
-        else
-        {
-            Solution solution = await workspace.OpenSolutionAsync(inputPath).ConfigureAwait(false);
-            projectCount = solution.Projects.Count();
-            documentCount = solution.Projects.Sum(project => project.Documents.Count());
-        }
+        Solution solution = await workspace.OpenSolutionAsync(inputPath).ConfigureAwait(false);
+        Project[] projects = solution.Projects.ToArray();
 
         WorkspaceDiagnostic[] reportedDiagnostics = diagnostics.ToArray();
         foreach (WorkspaceDiagnostic diagnostic in reportedDiagnostics)
@@ -221,8 +217,116 @@ internal static class CliApplication
             return null;
         }
 
-        await error.WriteLineAsync($"Loaded {projectCount} project(s) and {documentCount} document(s).").ConfigureAwait(false);
-        return new LoadedInput(isProject ? "project" : "solution", relativeInputPath);
+        int documentCount = projects.Sum(project => project.Documents.Count());
+        await error.WriteLineAsync($"Loaded {projects.Length} project(s) and {documentCount} document(s).").ConfigureAwait(false);
+        IReadOnlyList<MetricRecord> metrics = await FanInMetricCollector.CollectAsync(
+            projects,
+            inputRoot,
+            "solution").ConfigureAwait(false);
+        return new LoadedInput("solution", relativeInputPath, metrics);
+    }
+
+    private static async Task<LoadedInput?> LoadProjectInputAsync(
+        string inputPath,
+        string relativeInputPath,
+        string inputRoot,
+        TextWriter error)
+    {
+        string[] targetFrameworks = await GetTargetFrameworksAsync(inputPath).ConfigureAwait(false);
+        if (targetFrameworks.Length <= 1)
+        {
+            using MSBuildWorkspace workspace = MSBuildWorkspace.Create();
+            ConcurrentQueue<WorkspaceDiagnostic> diagnostics = new();
+            workspace.RegisterWorkspaceFailedHandler(eventArgs => diagnostics.Enqueue(eventArgs.Diagnostic));
+            Project project = await workspace.OpenProjectAsync(inputPath).ConfigureAwait(false);
+            WorkspaceDiagnostic[] reportedDiagnostics = diagnostics.ToArray();
+            await WriteWorkspaceDiagnosticsAsync(reportedDiagnostics, error).ConfigureAwait(false);
+            if (reportedDiagnostics.Any(diagnostic => diagnostic.Kind == WorkspaceDiagnosticKind.Failure))
+            {
+                return null;
+            }
+
+            await error.WriteLineAsync($"Loaded 1 project(s) and {project.Documents.Count()} document(s).").ConfigureAwait(false);
+            IReadOnlyList<MetricRecord> metrics = await FanInMetricCollector.CollectAsync([project], inputRoot, "project").ConfigureAwait(false);
+            return new LoadedInput("project", relativeInputPath, metrics);
+        }
+
+        List<MetricRecord> allMetrics = [];
+        int documentCount = 0;
+        foreach (string targetFramework in targetFrameworks)
+        {
+            Dictionary<string, string> properties = new(StringComparer.Ordinal)
+            {
+                ["TargetFramework"] = targetFramework
+            };
+            using MSBuildWorkspace workspace = MSBuildWorkspace.Create(properties);
+            ConcurrentQueue<WorkspaceDiagnostic> diagnostics = new();
+            workspace.RegisterWorkspaceFailedHandler(eventArgs => diagnostics.Enqueue(eventArgs.Diagnostic));
+            Project project = await workspace.OpenProjectAsync(inputPath).ConfigureAwait(false);
+            WorkspaceDiagnostic[] reportedDiagnostics = diagnostics.ToArray();
+            await WriteWorkspaceDiagnosticsAsync(reportedDiagnostics, error).ConfigureAwait(false);
+            if (reportedDiagnostics.Any(diagnostic => diagnostic.Kind == WorkspaceDiagnosticKind.Failure))
+            {
+                return null;
+            }
+
+            documentCount += project.Documents.Count();
+            IReadOnlyList<MetricRecord> metrics = await FanInMetricCollector.CollectAsync([project], inputRoot, "project").ConfigureAwait(false);
+            allMetrics.AddRange(metrics.Select(metric => metric with
+            {
+                Entity = metric.Entity with { ProjectId = $"{metric.Entity.ProjectId}#{targetFramework}" }
+            }));
+        }
+
+        await error.WriteLineAsync($"Loaded 1 project across {targetFrameworks.Length} target frameworks and {documentCount} document(s).").ConfigureAwait(false);
+        return new LoadedInput("project", relativeInputPath, allMetrics);
+    }
+
+    private static async Task<string[]> GetTargetFrameworksAsync(string projectPath)
+    {
+        ProcessStartInfo startInfo = new("dotnet")
+        {
+            CreateNoWindow = true,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false
+        };
+        startInfo.ArgumentList.Add("msbuild");
+        startInfo.ArgumentList.Add(projectPath);
+        startInfo.ArgumentList.Add("-nologo");
+        startInfo.ArgumentList.Add("-getProperty:TargetFrameworks,TargetFramework");
+
+        using Process process = Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Could not start dotnet MSBuild to inspect target frameworks.");
+        Task<string> standardOutput = process.StandardOutput.ReadToEndAsync();
+        Task<string> standardError = process.StandardError.ReadToEndAsync();
+        await process.WaitForExitAsync().ConfigureAwait(false);
+        string output = await standardOutput.ConfigureAwait(false);
+        string errorOutput = await standardError.ConfigureAwait(false);
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException($"Failure: Could not inspect target frameworks: {errorOutput}");
+        }
+
+        using JsonDocument propertiesDocument = JsonDocument.Parse(output);
+        JsonElement properties = propertiesDocument.RootElement.GetProperty("Properties");
+        string frameworks = properties.GetProperty("TargetFrameworks").GetString() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(frameworks))
+        {
+            return frameworks.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        return [];
+    }
+
+    private static async Task WriteWorkspaceDiagnosticsAsync(WorkspaceDiagnostic[] diagnostics, TextWriter error)
+    {
+        foreach (WorkspaceDiagnostic diagnostic in diagnostics)
+        {
+            await error.WriteLineAsync($"{diagnostic.Kind}: {diagnostic.Message}").ConfigureAwait(false);
+        }
     }
 
     private static bool TryParseArguments(
@@ -380,5 +484,5 @@ internal static class CliApplication
         }
     }
 
-    private sealed record LoadedInput(string Kind, string Path);
+    private sealed record LoadedInput(string Kind, string Path, IReadOnlyList<MetricRecord> Metrics);
 }

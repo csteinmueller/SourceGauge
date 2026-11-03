@@ -7,8 +7,11 @@
     <Project Path="tests/SourceGauge.Analyzers.Tests/SourceGauge.Analyzers.Tests.csproj" />
     <Project Path="tests/SourceGauge.Cli.Tests/SourceGauge.Cli.Tests.csproj" />
   </Folder>
-  <Folder Name="/tests/SourceGauge.Cli.Tests/" />
+  <Folder Name="/tests/SourceGauge.Cli.Tests/">
+    <Project Path="tests/SourceGauge.Cli.Tests/MultiTargetFixtureProject/MultiTargetFixtureProject.csproj" />
+  </Folder>
   <Folder Name="/tests/SourceGauge.Cli.Tests/Fixtures/">
+    <Project Path="tests/SourceGauge.Cli.Tests/Fixtures/FixtureCallerProject/FixtureCallerProject.csproj" />
     <Project Path="tests/SourceGauge.Cli.Tests/Fixtures/FixtureProject.csproj" />
   </Folder>
 </Solution>

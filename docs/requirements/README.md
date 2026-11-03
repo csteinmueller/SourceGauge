@@ -22,3 +22,4 @@ Accepted requirements live here as one Markdown file each, with a stable ID that
 | ID | Title | Kind | Priority | Status |
 |----|-------|------|----------|--------|
 | [REQ-0001](REQ-0001-interoperable-metric-output-contract.md) | Interoperable, language-neutral metric output contract | FR | Must | Accepted |
+| [REQ-0002](REQ-0002-method-level-fanin-metric.md) | Method-level FanIn metric | FR | Must | Accepted |

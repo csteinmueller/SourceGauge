@@ -9,7 +9,7 @@
 
 SourceGauge needs a precisely defined first metric whose values are reproducible and interpretable by downstream tools. FanIn can mean a count of call sites, distinct caller methods, or callers aggregated at type level. Roslyn can resolve many C# call relationships semantically, but virtual dispatch, generated code, external references, and dynamic calls require explicit scope rules.
 
-REQ-0001 and ADR-0007 establish the language-neutral result contract and JSON export behavior. This ADR records the accepted FanIn semantics; it does not change the result model, schema, serializer, or CLI contract. Issue #19 still requires approval of expected fixtures before implementation.
+REQ-0001 and ADR-0007 establish the language-neutral result contract and JSON export behavior. REQ-0002 records the FanIn functional requirement. This ADR records the accepted FanIn semantics; it does not change the result model, schema, serializer, or CLI contract. The expected-value fixture matrix in #19 has been approved.
 
 ## Options considered
 
@@ -33,10 +33,10 @@ The v1 rules are:
 - **Zero values:** emit a FanIn record with value `0` for every eligible target method with no distinct caller in the boundary.
 - **Output:** use metric identity `sourcegauge.fanin`, scope `project` or `solution` as appropriate, unit `count`, and the entity identity from ADR-0007. Values remain data and do not create diagnostics or build failures.
 
-Before implementation, maintainers must approve representative fixtures and expected values covering zero FanIn, repeated call sites, overloads, constructors (including static constructors as callers), recursion, interface/virtual calls, generated and unresolved code, multi-target projects, and cross-project references within a solution. Any change to the accepted metric semantics requires an explicitly approved ADR update.
+The approved fixture matrix in #19 covers zero FanIn, repeated call sites, overloads, constructors (including static constructors as callers), recursion, interface/virtual calls, generated and unresolved code, multi-target projects, and cross-project references within a solution. Any change to the accepted metric semantics requires an explicitly approved ADR update.
 
 ## Consequences
 
 The definition is implementable with Roslyn semantic operations and yields a stable count of distinct incoming source-method dependencies. It deliberately does not measure call frequency, runtime dispatch, external callers, or type-level aggregation. Those would require a separately defined metric or a future ADR.
 
-This accepted ADR is the implementation contract for FanIn semantics. No FanIn collection code should be added until the fixture set in #19 is approved.
+This accepted ADR is the implementation contract for FanIn semantics. Implementation should be tested against the approved fixtures in #19 and REQ-0002.

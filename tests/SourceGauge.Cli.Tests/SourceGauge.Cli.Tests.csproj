@@ -17,10 +17,13 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SourceGauge.Cli\SourceGauge.Cli.csproj" />
     <ProjectReference Include="Fixtures\FixtureProject.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="Fixtures\FixtureCallerProject\FixtureCallerProject.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="MultiTargetFixtureProject\MultiTargetFixtureProject.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Fixtures\**\*.cs" />
+    <Compile Remove="MultiTargetFixtureProject\**\*.cs" />
   </ItemGroup>
 
 </Project>
