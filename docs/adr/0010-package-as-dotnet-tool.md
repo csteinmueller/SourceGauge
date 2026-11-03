@@ -1,8 +1,8 @@
 # ADR-0010: Package SourceGauge as a .NET Tool
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-11-02
-- **Deciders:** TBD (maintainer review)
+- **Deciders:** @csteinmueller
 - **Related:** #20, ADR-0004, ADR-0005, ADR-0007, ADR-0009
 
 ## Context
@@ -20,7 +20,7 @@ The distribution method must preserve the CLI, CSharp, and Core boundaries in AD
 
 ## Decision
 
-We propose packaging the CLI as one framework-dependent .NET tool from `SourceGauge.Cli`. Use NuGet package ID `SourceGauge.Tool` and command name `sourcegauge`, subject to confirming package ID availability and ownership before the first publication. Keep `SourceGauge.Core` and `SourceGauge.CSharp` as implementation dependencies, not separate public tool packages.
+We will package the CLI as one framework-dependent .NET tool from `SourceGauge.Cli`. Use NuGet package ID `SourceGauge.Tool` and command name `sourcegauge`; verify package ID availability and ownership before the first publication, selecting an alternate ID before release if unavailable. Keep `SourceGauge.Core` and `SourceGauge.CSharp` as implementation dependencies, not separate public tool packages.
 
 The tool targets `net10.0`. Installing the tool does not install the .NET SDK or MSBuild. Users need a compatible installed .NET 10 SDK/MSBuild toolset to analyze C# projects and solutions, and must only analyze trusted inputs because MSBuild evaluation can execute project-defined logic. User-facing install/use documentation must state both prerequisites and the trusted-input warning.
 
