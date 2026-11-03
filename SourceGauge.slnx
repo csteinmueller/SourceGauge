@@ -1,11 +1,12 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/SourceGauge.Analyzers/SourceGauge.Analyzers.csproj" />
     <Project Path="src/SourceGauge.Cli/SourceGauge.Cli.csproj" />
+    <Project Path="src/SourceGauge.Core/SourceGauge.Core.csproj" />
+    <Project Path="src/SourceGauge.CSharp/SourceGauge.CSharp.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/SourceGauge.Analyzers.Tests/SourceGauge.Analyzers.Tests.csproj" />
     <Project Path="tests/SourceGauge.Cli.Tests/SourceGauge.Cli.Tests.csproj" />
+    <Project Path="tests/SourceGauge.CSharp.Tests/SourceGauge.CSharp.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/SourceGauge.Cli.Tests/">
     <Project Path="tests/SourceGauge.Cli.Tests/MultiTargetFixtureProject/MultiTargetFixtureProject.csproj" />

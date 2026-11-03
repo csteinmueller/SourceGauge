@@ -27,3 +27,4 @@ We record architecturally significant decisions as lightweight ADRs, following [
 | [0006](0006-versioned-metric-data-model-export.md) | Versioned metric data model and export | Accepted |
 | [0007](0007-versioned-json-metric-export-contract.md) | Versioned JSON metric export contract | Accepted |
 | [0008](0008-fanin-metric-definition.md) | FanIn metric definition | Accepted |
+| [0009](0009-cli-csharp-backend-boundaries.md) | CLI and C# backend project boundaries | Accepted |

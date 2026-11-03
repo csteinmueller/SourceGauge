@@ -45,10 +45,11 @@ dotnet test -c Release
 ## Repository layout
 
 ```
-src/SourceGauge.Analyzers/         current analyzer prototype (netstandard2.0)
-src/SourceGauge.Cli/                CLI for loading C# projects and solutions (net10.0)
-tests/SourceGauge.Analyzers.Tests/ tests for the current prototype
-tests/SourceGauge.Cli.Tests/       CLI command and loading tests
+src/SourceGauge.Core/               language-neutral metric result model (net10.0)
+src/SourceGauge.CSharp/             Roslyn-backed C# metric generation (net10.0)
+src/SourceGauge.Cli/                CLI loading, orchestration, and JSON export (net10.0)
+tests/SourceGauge.CSharp.Tests/     C# metric collector tests
+tests/SourceGauge.Cli.Tests/        CLI command, loading, and export integration tests
 docs/                              vision, requirements, ADRs
 .github/                           CI, templates, agents, prompts, agent hooks
 .githooks/                         local git hooks
