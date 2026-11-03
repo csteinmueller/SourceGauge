@@ -4,6 +4,11 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>SourceGauge.Cli</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>sourcegauge</ToolCommandName>
+    <PackageId>SourceGauge.Tool</PackageId>
+    <Description>Roslyn-powered code metrics for .NET.</Description>
+    <PackageTags>metrics;roslyn;csharp;code-analysis</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +21,10 @@
     <ProjectReference Include="..\SourceGauge.Core\SourceGauge.Core.csproj" />
     <ProjectReference Include="..\SourceGauge.CSharp\SourceGauge.CSharp.csproj" />
     <InternalsVisibleTo Include="SourceGauge.Cli.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>

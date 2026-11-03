@@ -1,0 +1,58 @@
+name: Tool package validation
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate tool package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify tag matches package version
+        shell: pwsh
+        run: |
+          $properties = [xml][System.IO.File]::ReadAllText('Directory.Build.props')
+          $expectedTag = "v$([string] $properties.Project.PropertyGroup.VersionPrefix)"
+          if ($env:GITHUB_REF_NAME -cne $expectedTag) {
+            throw "Tag '$env:GITHUB_REF_NAME' must match package version '$expectedTag'."
+          }
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Format check
+        if: matrix.os == 'ubuntu-latest'
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --logger trx --results-directory TestResults
+
+      - name: Pack tool
+        run: dotnet pack src/SourceGauge.Cli --configuration Release --no-build --output artifacts/tool-feed
+
+      - name: Smoke test tool package
+        run: pwsh ./scripts/smoke-test-tool.ps1 -PackageFeed artifacts/tool-feed
+
+      - name: Upload validated package
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v7
+        with:
+          name: sourcegauge-tool-package
+          path: artifacts/tool-feed/SourceGauge.Tool.*.nupkg

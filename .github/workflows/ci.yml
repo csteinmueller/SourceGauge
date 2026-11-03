@@ -47,6 +47,12 @@ jobs:
       - name: Test
         run: dotnet test --configuration Release --no-build --logger trx --collect "XPlat Code Coverage" --results-directory TestResults
 
+      - name: Pack tool for local smoke test
+        run: dotnet pack src/SourceGauge.Cli --configuration Release --no-build --output artifacts/tool-feed
+
+      - name: Smoke test tool package
+        run: pwsh ./scripts/smoke-test-tool.ps1 -PackageFeed artifacts/tool-feed
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v7

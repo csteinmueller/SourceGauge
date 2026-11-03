@@ -28,3 +28,4 @@ We record architecturally significant decisions as lightweight ADRs, following [
 | [0007](0007-versioned-json-metric-export-contract.md) | Versioned JSON metric export contract | Accepted |
 | [0008](0008-fanin-metric-definition.md) | FanIn metric definition | Accepted |
 | [0009](0009-cli-csharp-backend-boundaries.md) | CLI and C# backend project boundaries | Accepted |
+| [0010](0010-package-as-dotnet-tool.md) | Package SourceGauge as a .NET tool | Accepted |
