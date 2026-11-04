@@ -1,0 +1,39 @@
+name: Customer-reported technical debt
+description: Report a code-level design or maintenance concern in SourceGauge.
+title: "debt: "
+labels: [tech-debt, customer-request, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is a candidate for maintainer triage, not a commitment to accept or remediate it.
+        Do not include proprietary code, customer data, or secrets.
+
+  - type: textarea
+    id: location
+    attributes:
+      label: Code or design area
+      description: Link to the relevant public file, symbol, or decision.
+    validations:
+      required: true
+
+  - type: textarea
+    id: concern
+    attributes:
+      label: Why does this appear to be technical debt?
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Observed impact
+      description: Explain the maintenance cost or limitation you encountered.
+    validations:
+      required: true
+
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Suggested remediation
+      description: Optional. Maintainers determine classification and priority.
