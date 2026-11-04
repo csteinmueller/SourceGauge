@@ -56,3 +56,61 @@ jobs:
         with:
           name: sourcegauge-tool-package
           path: artifacts/tool-feed/SourceGauge.Tool.*.nupkg
+  publish:
+    name: Publish to Azure Artifacts
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: nuget-publish
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: sourcegauge-tool-package
+          path: artifacts/tool-feed
+
+      - name: Configure Azure Artifacts feed credentials
+        shell: pwsh
+        env:
+          AZURE_ARTIFACTS_PAT: ${{ secrets.AZURE_ARTIFACTS_PAT }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:AZURE_ARTIFACTS_PAT)) {
+            throw 'Set AZURE_ARTIFACTS_PAT as a secret in the nuget-publish environment.'
+          }
+
+          $configPath = Join-Path $env:RUNNER_TEMP 'NuGet.Config'
+          dotnet nuget add source `
+            'https://pkgs.dev.azure.com/stnmllr/15c4eb0e-aa65-4222-aa82-cba2bf088380/_packaging/SourceGauge.Tool/nuget/v3/index.json' `
+            --name AzureArtifacts `
+            --username AzureDevOps `
+            --password $env:AZURE_ARTIFACTS_PAT `
+            --store-password-in-clear-text `
+            --configfile $configPath
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Failed to configure the Azure Artifacts source.'
+          }
+
+          "NUGET_CONFIG_PATH=$configPath" >> $env:GITHUB_ENV
+
+      - name: Publish validated package
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem 'artifacts/tool-feed/SourceGauge.Tool.*.nupkg')
+          if ($packages.Count -ne 1) {
+            throw "Expected exactly one validated package, found $($packages.Count)."
+          }
+
+          dotnet nuget push $packages[0].FullName `
+            --api-key AzureArtifacts `
+            --source AzureArtifacts `
+            --configfile $env:NUGET_CONFIG_PATH
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Azure Artifacts package push failed.'
+          }
