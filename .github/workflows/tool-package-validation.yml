@@ -86,6 +86,7 @@ jobs:
           }
 
           $configPath = Join-Path $env:RUNNER_TEMP 'NuGet.Config'
+          [System.IO.File]::WriteAllText($configPath, '<configuration />')
           dotnet nuget add source `
             'https://pkgs.dev.azure.com/stnmllr/15c4eb0e-aa65-4222-aa82-cba2bf088380/_packaging/SourceGauge.Tool/nuget/v3/index.json' `
             --name AzureArtifacts `
