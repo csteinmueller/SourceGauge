@@ -11,6 +11,7 @@ $labels = @(
     @{ Name = 'adr';            Color = '5319e7'; Description = 'Architecture decision' }
     @{ Name = 'ai-assisted';    Color = 'c5def5'; Description = 'Change produced with AI assistance' }
     @{ Name = 'good first issue'; Color = '7057ff'; Description = 'Good for newcomers' }
+    @{ Name = 'customer-request'; Color = 'c2e0c6'; Description = 'Customer-originated feature and use-case request' }
 )
 
 foreach ($l in $labels) {
