@@ -56,3 +56,40 @@ jobs:
         with:
           name: sourcegauge-tool-package
           path: artifacts/tool-feed/SourceGauge.Tool.*.nupkg
+  publish:
+    name: Publish to NuGet.org
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: nuget-publish
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/download-artifact@v7
+        with:
+          name: sourcegauge-tool-package
+          path: artifacts/tool-feed
+
+      - name: NuGet login
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Publish validated package
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        run: |
+          $packages = @(Get-ChildItem 'artifacts/tool-feed/SourceGauge.Tool.*.nupkg')
+          if ($packages.Count -ne 1) {
+            throw "Expected exactly one validated package, found $($packages.Count)."
+          }
+          dotnet nuget push $packages[0].FullName --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json
