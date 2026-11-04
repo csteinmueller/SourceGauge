@@ -1,0 +1,66 @@
+name: Customer use-case request
+description: Request SourceGauge capabilities for a customer-owned use case.
+title: "feat: "
+labels: [enhancement, customer-request, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SourceGauge provides measurements, not customer-specific policies or guardrail enforcement.
+        Do not include proprietary code, prompts, model details, customer data, or secrets.
+        Maintainers may accept, defer, or decline requests.
+
+  - type: dropdown
+    id: source
+    attributes:
+      label: Request source
+      options:
+        - Existing customer
+        - Prospective customer
+        - Partner or integrator
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: customer_alias
+    attributes:
+      label: Customer or organization
+      description: Optional. Use only a public name or approved alias; otherwise leave blank.
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: What GenAI or other workflow are you building guardrails for?
+    validations:
+      required: true
+
+  - type: textarea
+    id: capability
+    attributes:
+      label: Missing SourceGauge capability
+      description: What metric, output, or capability would help your system?
+    validations:
+      required: true
+
+  - type: textarea
+    id: ownership
+    attributes:
+      label: Consumer-owned guardrail
+      description: What policy or enforcement will your system implement using SourceGauge data?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Describe observable results that would meet the need.
+    validations:
+      required: true
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround
