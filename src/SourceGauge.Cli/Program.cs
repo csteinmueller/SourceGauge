@@ -29,7 +29,7 @@ internal static class CliApplication
     private const int _analysisFailureExitCode = 1;
     private const int _usageErrorExitCode = 2;
 
-    private const string _usage = "Usage: SourceGauge [--output <file>] <project.csproj|solution.sln> | --help | --version";
+    private const string _usage = "Usage: SourceGauge [--output <file>] <project.csproj|solution.sln|solution.slnx> | --help | --version";
 
     private static readonly object _msBuildRegistrationLock = new();
 
@@ -90,10 +90,11 @@ internal static class CliApplication
 
         string extension = Path.GetExtension(inputPath);
         bool isProject = extension.Equals(".csproj", StringComparison.OrdinalIgnoreCase);
-        bool isSolution = extension.Equals(".sln", StringComparison.OrdinalIgnoreCase);
+        bool isSolution = extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
+            || extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase);
         if (!isProject && !isSolution)
         {
-            await error.WriteLineAsync("Error: input must be a C# project (.csproj) or solution (.sln).").ConfigureAwait(false);
+            await error.WriteLineAsync("Error: input must be a C# project (.csproj) or solution (.sln or .slnx).").ConfigureAwait(false);
             return _usageErrorExitCode;
         }
 

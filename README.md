@@ -12,11 +12,12 @@ SourceGauge is a command-line tool for analyzing C#/.NET codebases and extractin
 
 ## CLI
 
-The CLI loads C# projects and Visual Studio solution files using the installed .NET SDK and MSBuild. Run it from a .NET 10 SDK environment:
+The CLI loads C# projects (`.csproj`) and Visual Studio solution files (`.sln` and `.slnx`) using the installed .NET SDK and MSBuild. Run it from a .NET 10 SDK environment:
 
 ```bash
 dotnet run --project src/SourceGauge.Cli -- path/to/project.csproj
 dotnet run --project src/SourceGauge.Cli -- path/to/solution.sln
+dotnet run --project src/SourceGauge.Cli -- path/to/solution.slnx
 dotnet run --project src/SourceGauge.Cli -- --output metrics.json path/to/project.csproj
 dotnet run --project src/SourceGauge.Cli -- --help
 dotnet run --project src/SourceGauge.Cli -- --version
