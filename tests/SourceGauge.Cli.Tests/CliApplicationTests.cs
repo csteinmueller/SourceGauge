@@ -19,6 +19,7 @@ public class CliApplicationTests
 
         Assert.Equal(0, exitCode);
         Assert.Contains("Usage:", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains(".slnx", output.ToString(), StringComparison.Ordinal);
         Assert.Empty(error.ToString());
     }
 
@@ -71,6 +72,7 @@ public class CliApplicationTests
 
         Assert.Equal(2, exitCode);
         Assert.Contains(".csproj", error.ToString(), StringComparison.Ordinal);
+        Assert.Contains(".slnx", error.ToString(), StringComparison.Ordinal);
         Assert.Empty(output.ToString());
     }
 
@@ -80,8 +82,10 @@ public class CliApplicationTests
         string fixtureDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Fixtures"));
         string projectPath = Path.Combine(fixtureDirectory, "FixtureProject.csproj");
         string solutionPath = Path.Combine(fixtureDirectory, "FixtureSolution.sln");
+        string xmlSolutionPath = Path.Combine(fixtureDirectory, "FixtureSolution.slnx");
+        string? solutionMetrics = null;
 
-        foreach (string inputPath in new[] { projectPath, solutionPath })
+        foreach (string inputPath in new[] { projectPath, solutionPath, xmlSolutionPath })
         {
             using StringWriter output = new();
             using StringWriter error = new();
@@ -104,6 +108,20 @@ public class CliApplicationTests
             Assert.Equal("Fixture.Output.Assembly", project.GetProperty("assemblyName").GetString());
             Assert.True(project.GetProperty("sourceDocumentCount").GetInt32() > 0);
             Assert.Equal(0, project.GetProperty("compilerErrorCount").GetInt32());
+            string metrics = document.RootElement.GetProperty("metrics").GetRawText();
+            if (inputPath == projectPath)
+            {
+                Assert.Equal(4m, FindFanIn(document, "SourceGauge.Cli.Tests.Fixtures.FanInFixture.Target", "FixtureProject.csproj"));
+            }
+            else if (solutionMetrics is null)
+            {
+                solutionMetrics = metrics;
+            }
+            else
+            {
+                Assert.Equal(solutionMetrics, metrics);
+            }
+
             foreach (JsonElement metric in document.RootElement.GetProperty("metrics").EnumerateArray())
             {
                 Assert.True(metric.GetProperty("entity").TryGetProperty("assemblyName", out _));
@@ -115,7 +133,11 @@ public class CliApplicationTests
                     .GetProperty("entity")
                     .GetProperty("assemblyName")
                     .GetString());
-            Assert.Equal(inputPath == solutionPath ? 5m : 4m, FindFanIn(document, "SourceGauge.Cli.Tests.Fixtures.FanInFixture.Target", "FixtureProject.csproj"));
+            if (inputPath != projectPath)
+            {
+                Assert.Equal(5m, FindFanIn(document, "SourceGauge.Cli.Tests.Fixtures.FanInFixture.Target", "FixtureProject.csproj"));
+            }
+
             Assert.Equal(1m, FindFanIn(document, ".FanInFixture.#ctor"));
             Assert.Equal(2m, FindFanIn(document, "FanInFixture.Overloaded(System.Int32)"));
             Assert.Equal(1m, FindFanIn(document, "FanInFixture.Overloaded(System.String)"));
@@ -131,7 +153,7 @@ public class CliApplicationTests
             Assert.Equal(0m, FindFanIn(document, "FanInFixture.LambdaOnlyTarget"));
             Assert.Equal(1m, FindFanIn(document, "PartialFanInFixture.Target"));
             Assert.Contains("Loaded", error.ToString(), StringComparison.Ordinal);
-            if (inputPath == solutionPath)
+            if (inputPath != projectPath)
             {
                 Assert.Equal(1m, FindFanIn(document, "MultiTargetFanIn.Target", "../MultiTargetFixtureProject/MultiTargetFixtureProject.csproj#net10.0"));
                 Assert.Equal(1m, FindFanIn(document, "MultiTargetFanIn.Target", "../MultiTargetFixtureProject/MultiTargetFixtureProject.csproj#net9.0"));

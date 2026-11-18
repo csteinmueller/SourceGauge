@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="FixtureProject.csproj" />
+  <Project Path="FixtureCallerProject/FixtureCallerProject.csproj" />
+  <Project Path="../MultiTargetFixtureProject/MultiTargetFixtureProject.csproj" />
+  <Project Path="../MultiTargetCallerProject/MultiTargetCallerProject.csproj" />
+</Solution>
