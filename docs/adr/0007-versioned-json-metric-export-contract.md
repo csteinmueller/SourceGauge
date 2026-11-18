@@ -3,11 +3,11 @@
 - **Status:** Accepted
 - **Date:** 2026-11-01
 - **Deciders:** @csteinmueller
-- **Related:** REQ-0001, ADR-0006, #18
+- **Related:** REQ-0001, ADR-0006, #18, #44
 
 ## Context
 
-REQ-0001 establishes the semantic requirement for documented, machine-readable, versioned metric output backed by a language-neutral model. ADR-0006 accepts that model boundary and defers the concrete encoding, schema, compatibility, CLI, provenance, and ordering policies. Issue #18 requires those choices before export implementation begins; this ADR records the maintainer-approved contract.
+REQ-0001 establishes the semantic requirement for documented, machine-readable, versioned metric output backed by a language-neutral model. ADR-0006 accepts that model boundary and defers the concrete encoding, schema, compatibility, CLI, provenance, and ordering policies. Issue #18 requires those choices before export implementation begins; this ADR records the maintainer-approved contract. Issue #44 extends run provenance so consumers can locate source paths and judge whether project metrics are complete.
 
 The current CLI already routes operational messages to stderr. The export contract should preserve that separation while remaining deterministic and consumable by tools that do not reference SourceGauge assemblies.
 
@@ -25,8 +25,16 @@ The top-level document contains:
 
 - `schemaVersion`: a string containing the contract major version, initially `"1"`.
 - `tool`: producer name and version.
-- `run`: analyzed input kind and normalized input path relative to the process working directory, plus analysis configuration when the CLI exposes configuration that affects results.
+- `run`: analyzed input kind and normalized input path relative to the process working directory, plus analysis configuration when the CLI exposes configuration that affects results. It also contains the source-path base, a completeness flag, and project-context details as defined below.
 - `metrics`: an array of metric records.
+
+The following optional `run` properties extend schema version 1:
+
+- `sourceBasePath`: the normalized path of the analyzed input's containing directory, relative to the process working directory. Every `source.path` is relative to this directory. The value `"."` denotes the working directory itself; other relative path rules are unchanged. Producers emit this property whenever source paths may be present.
+- `analysisComplete`: `true` when analysis completed for every loaded project context and each context has zero compiler error diagnostics; otherwise `false`. Compiler errors do not by themselves fail the process or suppress the JSON report. Warnings do not make a run incomplete. A workspace/load/compilation failure that prevents producing a report continues to return a nonzero exit code.
+- `projects`: an array with one record for each project/target-framework context actually analyzed, including contexts with no metric records. Each record contains `projectId` (the normalized project path relative to the analyzed input root), `targetFramework` (the evaluated framework for that loaded context, not a value inferred from the output path), `assemblyName`, `sourceDocumentCount`, and `compilerErrorCount`. A solution may contain multiple records for one `projectId` when distinct target frameworks are analyzed. `sourceDocumentCount` counts the source documents in the loaded Roslyn project context. `compilerErrorCount` counts error-severity diagnostics returned by that context's compilation, once per diagnostic; it includes syntax and semantic errors, including unresolved or erroneous bindings. Warnings are excluded.
+
+New producers emit all three properties. They remain optional in the v1 schema so documents produced before this extension remain valid. Consumers that require a complete run must treat a missing `analysisComplete` as unknown/incomplete rather than assuming success or substituting zero.
 
 Each metric record contains:
 
@@ -47,7 +55,20 @@ For example, the shape is:
 {
   "schemaVersion": "1",
   "tool": { "name": "SourceGauge", "version": "1.0.0" },
-  "run": { "input": { "kind": "project", "path": "src/App/App.csproj" } },
+  "run": {
+    "input": { "kind": "project", "path": "src/App/App.csproj" },
+    "sourceBasePath": "src/App",
+    "analysisComplete": true,
+    "projects": [
+      {
+        "projectId": "App.csproj",
+        "targetFramework": "net10.0",
+        "assemblyName": "App",
+        "sourceDocumentCount": 1,
+        "compilerErrorCount": 0
+      }
+    ]
+  },
   "metrics": [
     {
       "id": "sourcegauge.fanin",
@@ -66,11 +87,11 @@ For example, the shape is:
 }
 ```
 
-Consumers must ignore unknown properties. Producers may add optional properties without changing the major version, provided existing meanings and required fields remain unchanged. Removing or renaming a required property, changing a property's type or meaning, or changing metric identity/unit semantics requires a new major `schemaVersion`.
+Consumers must ignore unknown properties. Producers may add optional properties without changing the major version, provided existing meanings and required fields remain unchanged. The `run` properties above are optional for compatibility, but new producers emit them. Removing or renaming a required property, changing a property's type or meaning, or changing metric identity/unit semantics requires a new major `schemaVersion`.
 
 The CLI emits exactly one JSON document to stdout by default and supports an explicit file destination. All operational messages remain on stderr. Empty analysis results produce a valid document with an empty `metrics` array. Analysis or serialization failures return a nonzero exit code. Serialize fully before writing stdout so serialization failures cannot emit a partial document; a stdout I/O failure can still leave partial bytes, returns nonzero, and must not emit a success message. For file output, write a temporary sibling file and replace the destination only after serialization and writing succeed; replacement failure is reported as an export failure.
 
-For deterministic results, omit timestamps and random run identifiers in version 1. Normalize input and source paths using `/`; paths are relative, and linked source paths outside the analyzed input root retain `..` segments rather than becoming absolute paths. Sort metric records by `id`, `scope`, `entity.projectId`, `entity.kind`, and `entity.id`, comparing each string by its UTF-8 bytes in ascending order, independent of locale and case folding. The uniqueness rule above guarantees no two records tie on the sort key. JSON object property order is not semantically significant; the producer emits fields in schema declaration order for repeatable output.
+For deterministic results, omit timestamps and random run identifiers in version 1. Normalize input and source paths using `/`; paths are relative, and linked source paths outside the analyzed input root retain `..` segments rather than becoming absolute paths. `sourceBasePath` is also relative and normalized, with `"."` allowed to denote the working directory. Sort metric records by `id`, `scope`, `entity.projectId`, `entity.kind`, and `entity.id`, comparing each string by its UTF-8 bytes in ascending order, independent of locale and case folding. The uniqueness rule above guarantees no two records tie on the sort key. JSON object property order is not semantically significant; the producer emits fields in schema declaration order for repeatable output.
 
 Paths must contain a non-whitespace character and must not contain control characters. The CLI rejects an input on a different Windows volume from the working directory before analysis because that input cannot be represented as a relative path under this contract. The input is reported as an invalid argument; the CLI does not emit an absolute path.
 

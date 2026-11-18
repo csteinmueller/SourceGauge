@@ -91,6 +91,19 @@ public class CliApplicationTests
             Assert.Equal(0, exitCode);
             using JsonDocument document = JsonDocument.Parse(output.ToString());
             Assert.Equal("1", document.RootElement.GetProperty("schemaVersion").GetString());
+            JsonElement run = document.RootElement.GetProperty("run");
+            Assert.True(run.GetProperty("analysisComplete").GetBoolean());
+            Assert.Equal(
+                Path.GetRelativePath(Environment.CurrentDirectory, Path.GetDirectoryName(inputPath)!)
+                    .Replace(Path.DirectorySeparatorChar, '/')
+                    .Replace(Path.AltDirectorySeparatorChar, '/'),
+                run.GetProperty("sourceBasePath").GetString());
+            JsonElement project = run.GetProperty("projects").EnumerateArray()
+                .Single(candidate => candidate.GetProperty("projectId").GetString() == "FixtureProject.csproj");
+            Assert.Equal("net10.0", project.GetProperty("targetFramework").GetString());
+            Assert.Equal("Fixture.Output.Assembly", project.GetProperty("assemblyName").GetString());
+            Assert.True(project.GetProperty("sourceDocumentCount").GetInt32() > 0);
+            Assert.Equal(0, project.GetProperty("compilerErrorCount").GetInt32());
             foreach (JsonElement metric in document.RootElement.GetProperty("metrics").EnumerateArray())
             {
                 Assert.True(metric.GetProperty("entity").TryGetProperty("assemblyName", out _));
@@ -149,6 +162,11 @@ public class CliApplicationTests
             Assert.Equal(0, exitCode);
             using JsonDocument document = JsonDocument.Parse(output.ToString());
             Assert.Equal(0m, FindFanIn(document, "UnresolvedFixture.Cases.Target", "UnresolvedFixture.csproj"));
+            JsonElement run = document.RootElement.GetProperty("run");
+            Assert.False(run.GetProperty("analysisComplete").GetBoolean());
+            JsonElement project = Assert.Single(run.GetProperty("projects").EnumerateArray());
+            Assert.True(project.GetProperty("sourceDocumentCount").GetInt32() > 0);
+            Assert.True(project.GetProperty("compilerErrorCount").GetInt32() > 0);
         }
         finally
         {
@@ -168,8 +186,47 @@ public class CliApplicationTests
 
         Assert.Equal(0, exitCode);
         using JsonDocument document = JsonDocument.Parse(output.ToString());
+        Assert.True(document.RootElement.GetProperty("run").GetProperty("analysisComplete").GetBoolean());
         Assert.Equal(1m, FindFanIn(document, "MultiTargetFanIn.Target", "MultiTargetFixtureProject.csproj#net10.0"));
         Assert.Equal(0m, FindFanIn(document, "MultiTargetFanIn.Target", "MultiTargetFixtureProject.csproj#netstandard2.0"));
+        string[] frameworks = document.RootElement.GetProperty("run").GetProperty("projects").EnumerateArray()
+            .Where(project => project.GetProperty("projectId").GetString() == "MultiTargetFixtureProject.csproj")
+            .Select(project => project.GetProperty("targetFramework").GetString()!)
+            .ToArray();
+        Assert.Equal(["net10.0", "netstandard2.0"], frameworks);
+    }
+
+    [Fact]
+    public async Task RunAsync_MultiTargetProjectWithCustomOutputPath_ReportsEvaluatedFrameworks()
+    {
+        string temporaryDirectory = Path.Combine(Environment.CurrentDirectory, $"SourceGauge.Cli.Tests.{Guid.NewGuid():N}");
+        Directory.CreateDirectory(temporaryDirectory);
+        string projectPath = Path.Combine(temporaryDirectory, "CustomOutputFixture.csproj");
+        string sourcePath = Path.Combine(temporaryDirectory, "CustomOutputFixture.cs");
+        await File.WriteAllTextAsync(
+            projectPath,
+            "<Project Sdk=\"Microsoft.NET.Sdk\"><PropertyGroup><TargetFrameworks>net10.0;netstandard2.0</TargetFrameworks><OutputPath>artifacts\\</OutputPath><AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath><GenerateDocumentationFile>false</GenerateDocumentationFile></PropertyGroup></Project>");
+        await File.WriteAllTextAsync(sourcePath, "namespace CustomOutputFixture; internal static class Example { internal static void Target() { } internal static void Caller() { Target(); } }");
+
+        try
+        {
+            using StringWriter output = new();
+            using StringWriter error = new();
+
+            int exitCode = await CliApplication.RunAsync([projectPath], output, error);
+
+            Assert.Equal(0, exitCode);
+            using JsonDocument document = JsonDocument.Parse(output.ToString());
+            string[] frameworks = document.RootElement.GetProperty("run").GetProperty("projects").EnumerateArray()
+                .Select(project => project.GetProperty("targetFramework").GetString()!)
+                .ToArray();
+            Assert.Equal(["net10.0", "netstandard2.0"], frameworks);
+            Assert.Equal(1m, FindFanIn(document, "CustomOutputFixture.Example.Target", "CustomOutputFixture.csproj#net10.0"));
+        }
+        finally
+        {
+            Directory.Delete(temporaryDirectory, recursive: true);
+        }
     }
 
     private static decimal FindFanIn(JsonDocument document, string entityIdSuffix, string? projectId = "FixtureProject.csproj")

@@ -13,11 +13,21 @@ internal sealed record MetricTool(
     string Version);
 
 internal sealed record MetricRun(
-    MetricInput Input);
+    MetricInput Input,
+    string SourceBasePath,
+    bool AnalysisComplete,
+    IReadOnlyList<MetricProject> Projects);
 
 internal sealed record MetricInput(
     string Kind,
     string Path);
+
+internal sealed record MetricProject(
+    string ProjectId,
+    string TargetFramework,
+    string AssemblyName,
+    int SourceDocumentCount,
+    int CompilerErrorCount);
 
 internal sealed record MetricRecord(
     string Id,

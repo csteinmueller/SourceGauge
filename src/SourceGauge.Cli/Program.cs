@@ -142,7 +142,11 @@ internal static class CliApplication
                 new MetricTool(
                     "SourceGauge",
                     typeof(CliApplication).Assembly.GetName().Version?.ToString(3) ?? "unknown"),
-                new MetricRun(new MetricInput(loadedInput.Kind, loadedInput.Path)),
+                new MetricRun(
+                    new MetricInput(loadedInput.Kind, loadedInput.Path),
+                    loadedInput.SourceBasePath,
+                    loadedInput.AnalysisComplete,
+                    loadedInput.Projects),
                 loadedInput.Metrics);
             byte[] json = MetricResultJson.Serialize(document);
 
@@ -196,9 +200,10 @@ internal static class CliApplication
         TextWriter error)
     {
         string inputRoot = Path.GetDirectoryName(inputPath)!;
+        string sourceBasePath = NormalizeSeparators(Path.GetRelativePath(Environment.CurrentDirectory, inputRoot));
         if (isProject)
         {
-            return await LoadProjectInputAsync(inputPath, relativeInputPath, inputRoot, error).ConfigureAwait(false);
+            return await LoadProjectInputAsync(inputPath, relativeInputPath, sourceBasePath, inputRoot, error).ConfigureAwait(false);
         }
 
         using MSBuildWorkspace workspace = MSBuildWorkspace.Create();
@@ -221,16 +226,24 @@ internal static class CliApplication
 
         int documentCount = projects.Sum(project => project.Documents.Count());
         await error.WriteLineAsync($"Loaded {projects.Length} project(s) and {documentCount} document(s).").ConfigureAwait(false);
+        MetricProject[] projectDetails = await GetProjectDetailsAsync(projects, inputRoot).ConfigureAwait(false);
         IReadOnlyList<MetricRecord> metrics = await FanInMetricCollector.CollectAsync(
             projects,
             inputRoot,
             "solution").ConfigureAwait(false);
-        return new LoadedInput("solution", relativeInputPath, metrics);
+        return new LoadedInput(
+            "solution",
+            relativeInputPath,
+            sourceBasePath,
+            projectDetails.All(project => project.CompilerErrorCount == 0),
+            projectDetails,
+            metrics);
     }
 
     private static async Task<LoadedInput?> LoadProjectInputAsync(
         string inputPath,
         string relativeInputPath,
+        string sourceBasePath,
         string inputRoot,
         TextWriter error)
     {
@@ -249,12 +262,19 @@ internal static class CliApplication
             }
 
             await error.WriteLineAsync($"Loaded 1 project(s) and {project.Documents.Count()} document(s).").ConfigureAwait(false);
+            MetricProject[] projectDetails = await GetProjectDetailsAsync([project], inputRoot).ConfigureAwait(false);
             IReadOnlyList<MetricRecord> metrics = await FanInMetricCollector.CollectAsync([project], inputRoot, "project").ConfigureAwait(false);
-            return new LoadedInput("project", relativeInputPath, metrics);
+            return new LoadedInput(
+                "project",
+                relativeInputPath,
+                sourceBasePath,
+                projectDetails.All(projectDetail => projectDetail.CompilerErrorCount == 0),
+                projectDetails,
+                metrics);
         }
 
         List<MetricRecord> allMetrics = [];
-        int documentCount = 0;
+        List<MetricProject> allProjectDetails = [];
         foreach (string targetFramework in targetFrameworks)
         {
             Dictionary<string, string> properties = new(StringComparer.Ordinal)
@@ -272,7 +292,7 @@ internal static class CliApplication
                 return null;
             }
 
-            documentCount += project.Documents.Count();
+            allProjectDetails.AddRange(await GetProjectDetailsAsync([project], inputRoot).ConfigureAwait(false));
             IReadOnlyList<MetricRecord> metrics = await FanInMetricCollector.CollectAsync([project], inputRoot, "project").ConfigureAwait(false);
             allMetrics.AddRange(metrics.Select(metric => metric with
             {
@@ -280,8 +300,49 @@ internal static class CliApplication
             }));
         }
 
+        int documentCount = allProjectDetails.Sum(project => project.SourceDocumentCount);
         await error.WriteLineAsync($"Loaded 1 project across {targetFrameworks.Length} target frameworks and {documentCount} document(s).").ConfigureAwait(false);
-        return new LoadedInput("project", relativeInputPath, allMetrics);
+        MetricProject[] orderedProjectDetails = OrderProjectDetails(allProjectDetails);
+        return new LoadedInput(
+            "project",
+            relativeInputPath,
+            sourceBasePath,
+            orderedProjectDetails.All(project => project.CompilerErrorCount == 0),
+            orderedProjectDetails,
+            allMetrics);
+    }
+
+    private static async Task<MetricProject[]> GetProjectDetailsAsync(
+        Project[] projects,
+        string inputRoot)
+    {
+        MetricProject[] projectDetails = new MetricProject[projects.Length];
+        for (int index = 0; index < projects.Length; index++)
+        {
+            Project project = projects[index];
+            string projectPath = Path.GetFullPath(project.FilePath
+                ?? throw new InvalidOperationException("Loaded project has no file path."));
+            Compilation compilation = await project.GetCompilationAsync().ConfigureAwait(false)
+                ?? throw new InvalidOperationException($"Could not create a compilation for '{projectPath}'.");
+            string targetFramework = FanInMetricCollector.GetTargetFramework(project);
+
+            projectDetails[index] = new MetricProject(
+                NormalizeSeparators(Path.GetRelativePath(inputRoot, projectPath)),
+                targetFramework,
+                compilation.Assembly.Identity.Name,
+                project.Documents.Count(),
+                compilation.GetDiagnostics().Count(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error));
+        }
+
+        return OrderProjectDetails(projectDetails);
+    }
+
+    private static MetricProject[] OrderProjectDetails(IEnumerable<MetricProject> projectDetails)
+    {
+        return projectDetails
+            .OrderBy(project => project.ProjectId, StringComparer.Ordinal)
+            .ThenBy(project => project.TargetFramework, StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static async Task<string[]> GetTargetFrameworksAsync(string projectPath)
@@ -486,5 +547,11 @@ internal static class CliApplication
         }
     }
 
-    private sealed record LoadedInput(string Kind, string Path, IReadOnlyList<MetricRecord> Metrics);
+    private sealed record LoadedInput(
+        string Kind,
+        string Path,
+        string SourceBasePath,
+        bool AnalysisComplete,
+        IReadOnlyList<MetricProject> Projects,
+        IReadOnlyList<MetricRecord> Metrics);
 }

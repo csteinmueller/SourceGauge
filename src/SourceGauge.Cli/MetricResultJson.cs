@@ -58,6 +58,28 @@ internal static class MetricResultJson
         }
 
         ValidateRelativePath(document.Run.Input.Path, nameof(document.Run.Input.Path));
+        ValidateRelativeDirectoryPath(document.Run.SourceBasePath, nameof(document.Run.SourceBasePath));
+        HashSet<ProjectIdentity> projectIdentities = new();
+        foreach (MetricProject project in document.Run.Projects)
+        {
+            ValidateRelativePath(project.ProjectId, nameof(project.ProjectId));
+            ValidateText(project.TargetFramework, nameof(project.TargetFramework));
+            ValidateText(project.AssemblyName, nameof(project.AssemblyName));
+            if (project.SourceDocumentCount < 0 || project.CompilerErrorCount < 0)
+            {
+                throw new ArgumentException("Project document and compiler error counts cannot be negative.", nameof(document));
+            }
+
+            if (!projectIdentities.Add(new ProjectIdentity(project.ProjectId, project.TargetFramework)))
+            {
+                throw new ArgumentException("Project contexts must have unique project and target framework identities.", nameof(document));
+            }
+        }
+
+        if (document.Run.AnalysisComplete != document.Run.Projects.All(project => project.CompilerErrorCount == 0))
+        {
+            throw new ArgumentException("Analysis completeness must match the project compiler error counts.", nameof(document));
+        }
 
         HashSet<MetricIdentity> identities = new();
         foreach (MetricRecord metric in document.Metrics)
@@ -141,6 +163,45 @@ internal static class MetricResultJson
         }
     }
 
+    private static void ValidateRelativeDirectoryPath(string path, string parameterName)
+    {
+        ValidateText(path, parameterName);
+        if ((path.Length > 0 && path[0] == '/')
+            || path.Contains('\\')
+            || path.Any(char.IsControl)
+            || (path.Length >= 2 && char.IsAsciiLetter(path[0]) && path[1] == ':'))
+        {
+            throw new ArgumentException("Contract directory paths must be normalized relative paths using '/'.", parameterName);
+        }
+
+        if (path == ".")
+        {
+            return;
+        }
+
+        string[] segments = path.Split('/');
+        bool foundNonParentSegment = false;
+        foreach (string segment in segments)
+        {
+            if (segment.Length == 0 || segment == ".")
+            {
+                throw new ArgumentException("Contract directory paths must be normalized relative paths using '/'.", parameterName);
+            }
+
+            if (segment == "..")
+            {
+                if (foundNonParentSegment)
+                {
+                    throw new ArgumentException("Contract directory paths must be normalized relative paths using '/'.", parameterName);
+                }
+
+                continue;
+            }
+
+            foundNonParentSegment = true;
+        }
+    }
+
     private static byte[] CreateSortKey(MetricRecord metric)
     {
         string[] fields =
@@ -170,6 +231,8 @@ internal static class MetricResultJson
         string ProjectId,
         string EntityKind,
         string EntityId);
+
+    private readonly record struct ProjectIdentity(string ProjectId, string TargetFramework);
 
     private sealed record SortEntry(MetricRecord Metric, byte[] Key);
 
