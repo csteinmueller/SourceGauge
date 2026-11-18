@@ -134,7 +134,7 @@ public class CliApplicationTests
             if (inputPath == solutionPath)
             {
                 Assert.Equal(1m, FindFanIn(document, "MultiTargetFanIn.Target", "../MultiTargetFixtureProject/MultiTargetFixtureProject.csproj#net10.0"));
-                Assert.Equal(0m, FindFanIn(document, "MultiTargetFanIn.Target", "../MultiTargetFixtureProject/MultiTargetFixtureProject.csproj#netstandard2.0"));
+                Assert.Equal(1m, FindFanIn(document, "MultiTargetFanIn.Target", "../MultiTargetFixtureProject/MultiTargetFixtureProject.csproj#net9.0"));
                 JsonElement externalCaller = FindMetric(document, "External.ExternalCaller.CallTarget", "FixtureCallerProject/FixtureCallerProject.csproj");
                 Assert.Equal("FixtureCallerProject/ExternalCaller.cs", externalCaller.GetProperty("source").GetProperty("path").GetString());
                 Assert.Equal(0m, FindFanIn(document, "SourceGauge.Cli.Tests.Fixtures.FanInFixture.Target", "FixtureCallerProject/FixtureCallerProject.csproj"));
@@ -187,13 +187,13 @@ public class CliApplicationTests
         Assert.Equal(0, exitCode);
         using JsonDocument document = JsonDocument.Parse(output.ToString());
         Assert.True(document.RootElement.GetProperty("run").GetProperty("analysisComplete").GetBoolean());
-        Assert.Equal(1m, FindFanIn(document, "MultiTargetFanIn.Target", "MultiTargetFixtureProject.csproj#net10.0"));
-        Assert.Equal(0m, FindFanIn(document, "MultiTargetFanIn.Target", "MultiTargetFixtureProject.csproj#netstandard2.0"));
+        Assert.Equal(0m, FindFanIn(document, "MultiTargetFanIn.Target", "MultiTargetFixtureProject.csproj#net10.0"));
+        Assert.Equal(0m, FindFanIn(document, "MultiTargetFanIn.Target", "MultiTargetFixtureProject.csproj#net9.0"));
         string[] frameworks = document.RootElement.GetProperty("run").GetProperty("projects").EnumerateArray()
             .Where(project => project.GetProperty("projectId").GetString() == "MultiTargetFixtureProject.csproj")
             .Select(project => project.GetProperty("targetFramework").GetString()!)
             .ToArray();
-        Assert.Equal(["net10.0", "netstandard2.0"], frameworks);
+        Assert.Equal(["net10.0", "net9.0"], frameworks);
     }
 
     [Fact]
