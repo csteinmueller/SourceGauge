@@ -66,6 +66,17 @@ public class MetricResultJsonTests
         Assert.Throws<ArgumentException>(() => MetricResultJson.Serialize(document));
     }
 
+    [Fact]
+    public void Serialize_EmptyAssemblyName_ThrowsArgumentException()
+    {
+        MetricRecord metric = CreateMetric("sample.metric", "project.csproj", "Run()", 1) with
+        {
+            Entity = new MetricEntity("method", "project.csproj", " ", "Run()", null)
+        };
+
+        Assert.Throws<ArgumentException>(() => MetricResultJson.Serialize(CreateDocument([metric])));
+    }
+
     [Theory]
     [InlineData("/absolute/project.csproj")]
     [InlineData("C:/absolute/project.csproj")]
@@ -330,7 +341,7 @@ public class MetricResultJsonTests
         return new MetricRecord(
             id,
             "project",
-            new MetricEntity("method", projectId, entityId, null),
+            new MetricEntity("method", projectId, null, entityId, null),
             new MetricSource("src/Example.cs"),
             value,
             "count");

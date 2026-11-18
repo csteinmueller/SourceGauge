@@ -32,12 +32,12 @@ Each metric record contains:
 
 - `id`: a stable, language-neutral metric identity, such as `sourcegauge.fanin`.
 - `scope`: the analysis boundary over which the metric is calculated, such as a project or solution.
-- `entity`: the measured entity's kind, project identity, and canonical identifier; a human-readable display name may be included separately and is not part of identity.
+- `entity`: the measured entity's kind, project identity, and canonical identifier; an assembly name and human-readable display name may be included separately and are not part of identity.
 - `source`: the source file identity relative to the analyzed input root (the project directory for a project input, or solution directory for a solution input) when the entity originates from a source file.
 - `value`: a finite decimal value serialized as a JSON number.
 - `unit`: a stable string token, such as `count`.
 
-For C# version 1, `entity.projectId` is the normalized project path relative to the analyzed input root, with the target framework included when multiple target contexts are emitted. The canonical `entity.id` distinguishes declarations using the containing namespace and nested type chain (including generic arity), member kind and name, method generic arity, and ordered parameter type identities and ref-kinds. Constructors use distinct `.ctor` and `.cctor` identities; indexers include their parameter signatures; explicit interface implementations include the interface-qualified member identity. Thus overloaded and generic members cannot share an identifier, and the project identity distinguishes identical symbols in separate projects. Identifiers are opaque to consumers and are guaranteed only within an analyzed input and this identity-format version; identifiers from different language backends need not be comparable.
+For C# version 1, `entity.projectId` is the normalized project path relative to the analyzed input root, with the target framework included when multiple target contexts are emitted. `entity.assemblyName` is the assembly name from the target framework's compiled project context. It is an optional additive property in schema version 1 for compatibility with existing records; the C# backend emits it for every method and constructor record. It is not inferred from the project file name. The canonical `entity.id` distinguishes declarations using the containing namespace and nested type chain (including generic arity), member kind and name, method generic arity, and ordered parameter type identities and ref-kinds. Constructors use distinct `.ctor` and `.cctor` identities; indexers include their parameter signatures; explicit interface implementations include the interface-qualified member identity. Thus overloaded and generic members cannot share an identifier, and the project identity distinguishes identical symbols in separate projects. C# method ID syntax and examples are specified in [C# method identity](../csharp-method-identity.md). Identifiers from different language backends need not be comparable.
 
 A document contains at most one metric record for each `(id, scope, entity.projectId, entity.kind, entity.id)` tuple. Metric definitions aggregate their observations into that record. This uniqueness rule makes the proposed ordering a total order.
 
@@ -55,6 +55,7 @@ For example, the shape is:
       "entity": {
         "kind": "method",
         "projectId": "App.csproj",
+        "assemblyName": "App",
         "id": "N.Example`1.Run``1(System.Int32)"
       },
       "source": { "path": "Example.cs" },

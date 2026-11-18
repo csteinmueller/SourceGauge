@@ -45,6 +45,7 @@ internal static class FanInMetricCollector
                 new MetricEntity(
                     target.Symbol.MethodKind == MethodKind.Constructor ? "constructor" : "method",
                     analysis.ProjectId,
+                    analysis.Compilation.Assembly.Identity.Name,
                     GetMethodId(target.Symbol),
                     target.Symbol.Name),
                 new MetricSource(target.SourcePath),
@@ -282,9 +283,13 @@ internal static class FanInMetricCollector
 
     private static string GetMethodId(IMethodSymbol method)
     {
-        string documentationId = NormalizeMethod(method).GetDocumentationCommentId()
-            ?? NormalizeMethod(method).ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-        return documentationId.StartsWith("M:", StringComparison.Ordinal) ? documentationId[2..] : documentationId;
+        string? documentationId = NormalizeMethod(method).GetDocumentationCommentId();
+        if (documentationId is null || !documentationId.StartsWith("M:", StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Could not create a C# method identity for '{method.ToDisplayString()}'.");
+        }
+
+        return documentationId[2..];
     }
 
     private static string GetSourcePath(IMethodSymbol method, string inputRoot)
