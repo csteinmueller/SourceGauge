@@ -31,6 +31,19 @@
             }
           },
           "additionalProperties": true
+        },
+        "sourceBasePath": {
+          "$ref": "#/$defs/relativeDirectoryPath",
+          "description": "Normalized path of the analyzed input's containing directory, relative to the process working directory. Every source.path is relative to this directory; '.' denotes the working directory."
+        },
+        "analysisComplete": {
+          "type": "boolean",
+          "description": "True only when every analyzed project context has zero compiler error diagnostics. Compiler errors do not change the process exit code or suppress the report."
+        },
+        "projects": {
+          "type": "array",
+          "description": "Project and target-framework contexts analyzed by this run, including contexts with no metric records.",
+          "items": { "$ref": "#/$defs/project" }
         }
       },
       "additionalProperties": true
@@ -41,6 +54,44 @@
     }
   },
   "$defs": {
+    "relativeDirectoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?=[\\s\\S]*\\S)(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F])(?:\\.|\\.\\.(?:/\\.\\.)*|(?:\\.\\./)*(?!\\.{1,2}(?:/|$))(?![\\s\\S]*?/\\.{1,2}(?:/|$))(?![A-Za-z]:)(?!/)(?![\\s\\S]*?\\\\)[^/]+(?:/[^/]+)*)$"
+    },
+    "project": {
+      "type": "object",
+      "required": ["projectId", "targetFramework", "assemblyName", "sourceDocumentCount", "compilerErrorCount"],
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Normalized project path relative to the analyzed input root.",
+          "pattern": "^(?=[\\s\\S]*\\S)(?![\\s\\S]*[\\u0000-\\u001F\\u007F-\\u009F])(?:\\.\\./)*(?!\\.{1,2}(?:/|$))(?![\\s\\S]*?/\\.{1,2}(?:/|$))(?![A-Za-z]:)(?!/)(?![\\s\\S]*?\\\\)[^/]+(?:/[^/]+)*$"
+        },
+        "targetFramework": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Evaluated target framework of this analyzed project context; it is not inferred from the output path."
+        },
+        "assemblyName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Assembly name from this context's compilation."
+        },
+        "sourceDocumentCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of source documents in the loaded project context."
+        },
+        "compilerErrorCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of error-severity compilation diagnostics, counted once per diagnostic. Includes syntax and semantic errors such as unresolved or erroneous bindings; excludes warnings."
+        }
+      },
+      "additionalProperties": true
+    },
     "metric": {
       "type": "object",
       "required": ["id", "scope", "entity", "value", "unit"],

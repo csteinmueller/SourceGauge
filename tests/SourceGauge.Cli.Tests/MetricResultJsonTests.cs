@@ -67,6 +67,21 @@ public class MetricResultJsonTests
     }
 
     [Fact]
+    public void Serialize_CompleteRunWithCompilerErrors_ThrowsArgumentException()
+    {
+        MetricResultDocument document = CreateDocument([]) with
+        {
+            Run = new MetricRun(
+                new MetricInput("project", "project.csproj"),
+                ".",
+                true,
+                [new MetricProject("project.csproj", "net10.0", "Example", 1, 1)])
+        };
+
+        Assert.Throws<ArgumentException>(() => MetricResultJson.Serialize(document));
+    }
+
+    [Fact]
     public void Serialize_EmptyAssemblyName_ThrowsArgumentException()
     {
         MetricRecord metric = CreateMetric("sample.metric", "project.csproj", "Run()", 1) with
@@ -93,7 +108,7 @@ public class MetricResultJsonTests
     {
         MetricResultDocument document = CreateDocument([]) with
         {
-            Run = new MetricRun(new MetricInput("project", path))
+            Run = CreateRun(new MetricInput("project", path))
         };
 
         Assert.Throws<ArgumentException>(() => MetricResultJson.Serialize(document));
@@ -122,7 +137,7 @@ public class MetricResultJsonTests
             Source = new MetricSource("../Shared/Shared.cs")
         }]) with
         {
-            Run = new MetricRun(new MetricInput("solution", "../repo/App.sln"))
+            Run = CreateRun(new MetricInput("solution", "../repo/App.sln"), "../repo")
         };
 
         byte[] json = MetricResultJson.Serialize(document);
@@ -139,13 +154,57 @@ public class MetricResultJsonTests
     {
         MetricResultDocument document = CreateDocument([]) with
         {
-            Run = new MetricRun(new MetricInput("project", " project.csproj"))
+            Run = CreateRun(new MetricInput("project", " project.csproj"))
         };
         string schemaPath = FindRepositoryFile("docs", "schema", "metric-results-v1.schema.json");
         using JsonDocument schema = JsonDocument.Parse(File.ReadAllText(schemaPath));
         using JsonDocument parsed = JsonDocument.Parse(MetricResultJson.Serialize(document));
 
         AssertConformsToSchema(schema.RootElement, parsed.RootElement, schema.RootElement);
+    }
+
+    [Fact]
+    public void Serialize_CurrentDirectorySourceBasePath_ConformsToSchema()
+    {
+        MetricResultDocument document = CreateDocument([]) with
+        {
+            Run = CreateRun(new MetricInput("project", "project.csproj"), ".")
+        };
+        string schemaPath = FindRepositoryFile("docs", "schema", "metric-results-v1.schema.json");
+        using JsonDocument schema = JsonDocument.Parse(File.ReadAllText(schemaPath));
+        using JsonDocument parsed = JsonDocument.Parse(MetricResultJson.Serialize(document));
+
+        AssertConformsToSchema(schema.RootElement, parsed.RootElement, schema.RootElement);
+    }
+
+    [Theory]
+    [InlineData("/absolute")]
+    [InlineData("C:/absolute")]
+    [InlineData("C:relative")]
+    [InlineData("src//app")]
+    [InlineData("src/./app")]
+    [InlineData("src/../app")]
+    [InlineData("src\\app")]
+    [InlineData("src\n/app")]
+    [InlineData("   ")]
+    public void Serialize_NonNormalizedSourceBasePath_ThrowsArgumentException(string path)
+    {
+        MetricResultDocument document = CreateDocument([]) with
+        {
+            Run = CreateRun(new MetricInput("project", "project.csproj"), path)
+        };
+
+        Assert.Throws<ArgumentException>(() => MetricResultJson.Serialize(document));
+
+        string schemaPath = FindRepositoryFile("docs", "schema", "metric-results-v1.schema.json");
+        using JsonDocument schema = JsonDocument.Parse(File.ReadAllText(schemaPath));
+        string pathPattern = schema.RootElement
+            .GetProperty("$defs")
+            .GetProperty("relativeDirectoryPath")
+            .GetProperty("pattern")
+            .GetString()!;
+
+        Assert.False(Regex.IsMatch(path, pathPattern, RegexOptions.CultureInvariant));
     }
 
     [Fact]
@@ -273,6 +332,17 @@ public class MetricResultJsonTests
             case "number":
                 Assert.True(IsDecimalValueAllowed(schema, value));
                 break;
+            case "integer":
+                Assert.True(value.TryGetInt32(out int integer));
+                if (schema.TryGetProperty("minimum", out JsonElement minimum))
+                {
+                    Assert.True(integer >= minimum.GetInt32());
+                }
+
+                break;
+            case "boolean":
+                Assert.True(value.ValueKind is JsonValueKind.True or JsonValueKind.False);
+                break;
             default:
                 throw new InvalidOperationException($"Unsupported schema type '{type.GetString()}'.");
         }
@@ -332,8 +402,13 @@ public class MetricResultJsonTests
         return new MetricResultDocument(
             MetricResultJson.SchemaVersion,
             new MetricTool("SourceGauge", "1.0.0"),
-            new MetricRun(new MetricInput("project", "src/project.csproj")),
+            CreateRun(new MetricInput("project", "src/project.csproj")),
             metrics);
+    }
+
+    private static MetricRun CreateRun(MetricInput input, string sourceBasePath = ".")
+    {
+        return new MetricRun(input, sourceBasePath, true, []);
     }
 
     private static MetricRecord CreateMetric(string id, string projectId, string entityId, decimal value)

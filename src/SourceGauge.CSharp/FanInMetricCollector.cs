@@ -298,17 +298,17 @@ internal static class FanInMetricCollector
         return NormalizeSeparators(Path.GetRelativePath(inputRoot, Path.GetFullPath(sourcePath)));
     }
 
-    private static string GetTargetFramework(Project project)
+    internal static string GetTargetFramework(Project project)
     {
-        string? outputFilePath = project.OutputFilePath;
-        string? outputDirectory = outputFilePath is null ? null : Path.GetDirectoryName(outputFilePath);
-        string? targetFramework = outputDirectory is null ? null : Path.GetFileName(outputDirectory);
-        if (string.IsNullOrWhiteSpace(targetFramework))
+        if (project.AnalyzerOptions.AnalyzerConfigOptionsProvider.GlobalOptions.TryGetValue(
+                "build_property.TargetFramework",
+                out string? targetFramework)
+            && !string.IsNullOrWhiteSpace(targetFramework))
         {
-            throw new InvalidOperationException($"Could not determine target framework for '{project.FilePath}'.");
+            return targetFramework;
         }
 
-        return targetFramework;
+        throw new InvalidOperationException($"Could not determine target framework for '{project.FilePath}'.");
     }
 
     private static StringComparer GetPathComparer()
