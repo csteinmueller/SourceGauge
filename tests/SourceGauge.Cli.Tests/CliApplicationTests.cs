@@ -91,6 +91,17 @@ public class CliApplicationTests
             Assert.Equal(0, exitCode);
             using JsonDocument document = JsonDocument.Parse(output.ToString());
             Assert.Equal("1", document.RootElement.GetProperty("schemaVersion").GetString());
+            foreach (JsonElement metric in document.RootElement.GetProperty("metrics").EnumerateArray())
+            {
+                Assert.True(metric.GetProperty("entity").TryGetProperty("assemblyName", out _));
+            }
+
+            Assert.Equal(
+                "Fixture.Output.Assembly",
+                FindMetric(document, "SourceGauge.Cli.Tests.Fixtures.FanInFixture.Target", "FixtureProject.csproj")
+                    .GetProperty("entity")
+                    .GetProperty("assemblyName")
+                    .GetString());
             Assert.Equal(inputPath == solutionPath ? 5m : 4m, FindFanIn(document, "SourceGauge.Cli.Tests.Fixtures.FanInFixture.Target", "FixtureProject.csproj"));
             Assert.Equal(1m, FindFanIn(document, ".FanInFixture.#ctor"));
             Assert.Equal(2m, FindFanIn(document, "FanInFixture.Overloaded(System.Int32)"));

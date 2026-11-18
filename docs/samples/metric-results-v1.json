@@ -17,6 +17,7 @@
       "entity": {
         "kind": "method",
         "projectId": "App.csproj",
+        "assemblyName": "App",
         "id": "N.Example`1.Run``1(System.Int32)",
         "displayName": "Run"
       },

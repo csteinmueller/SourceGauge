@@ -66,6 +66,11 @@ internal static class MetricResultJson
             ValidateText(metric.Scope, nameof(metric.Scope));
             ValidateText(metric.Entity.Kind, nameof(metric.Entity.Kind));
             ValidateRelativePath(metric.Entity.ProjectId, nameof(metric.Entity.ProjectId));
+            if (metric.Entity.AssemblyName is not null)
+            {
+                ValidateText(metric.Entity.AssemblyName, nameof(metric.Entity.AssemblyName));
+            }
+
             ValidateText(metric.Entity.Id, nameof(metric.Entity.Id));
             ValidateText(metric.Unit, nameof(metric.Unit));
             if (metric.Entity.DisplayName is not null)

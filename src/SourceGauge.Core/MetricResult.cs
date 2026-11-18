@@ -30,6 +30,7 @@ internal sealed record MetricRecord(
 internal sealed record MetricEntity(
     string Kind,
     string ProjectId,
+    string? AssemblyName,
     string Id,
     string? DisplayName);
 
