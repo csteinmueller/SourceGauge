@@ -19,11 +19,13 @@
     <ProjectReference Include="Fixtures\FixtureProject.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="Fixtures\FixtureCallerProject\FixtureCallerProject.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="MultiTargetFixtureProject\MultiTargetFixtureProject.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="MultiTargetCallerProject\MultiTargetCallerProject.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Remove="Fixtures\**\*.cs" />
     <Compile Remove="MultiTargetFixtureProject\**\*.cs" />
+    <Compile Remove="MultiTargetCallerProject\**\*.cs" />
   </ItemGroup>
 
 </Project>
